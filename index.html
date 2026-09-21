@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>QC Operations & Fleet Coverage Portal</title>
   
-  <!-- Inter Font -->
+  <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -35,6 +35,11 @@
       }
     }
   </script>
+
+  <!-- KaTeX for crisp LaTeX formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
 
   <!-- External Libraries: Chart.js & SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -77,6 +82,9 @@
 
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-emerald-100 selection:text-emerald-900 pb-20 md:pb-6">
 
+  <!-- ================================================================= -->
+  <!-- APP HEADER & NAVIGATION -->
+  <!-- ================================================================= -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
@@ -104,7 +112,7 @@
             <span id="cloudStatusText">Connecting Cloud...</span>
           </button>
 
-          <!-- Inspector Device UID / Quick Info -->
+          <!-- Inspector Device UID -->
           <div class="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-mono text-slate-600">
             <span class="text-[10px] text-slate-400">UID:</span>
             <span id="headerInspectorUid">local-qc</span>
@@ -120,9 +128,10 @@
       </div>
     </div>
 
+    <!-- Desktop Nav Tabs -->
     <nav class="hidden md:block bg-slate-50 border-t border-slate-200/60 px-4 sm:px-6 lg:px-8">
       <div class="max-w-7xl mx-auto flex space-x-1 py-1.5 overflow-x-auto custom-scrollbar">
-        <button onclick="portal.switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition flex items-center gap-1.5">
+        <button onclick="portal.switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-emerald-700 shadow-2xs transition flex items-center gap-1.5">
           <span>📊</span> Dashboard
         </button>
         <button onclick="portal.switchTab('inspection')" id="nav-inspection" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white transition flex items-center gap-1.5">
@@ -144,6 +153,9 @@
     </nav>
   </header>
 
+  <!-- ================================================================= -->
+  <!-- MAIN APPLICATION CONTENT -->
+  <!-- ================================================================= -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
 
     <!-- ================================================================= -->
@@ -156,9 +168,11 @@
         <div>
           <div class="flex items-center gap-2">
             <h2 class="text-lg font-bold text-slate-900">Fleet Operations & QC Audit KPI</h2>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Cutoff: 6:00 AM</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Daily Cutoff: 6:00 AM</span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5">Operational Cycle: Saturday 06:00:00 to Friday 05:59:59 • Target: $\ge 70\%$ Unique Coverage</p>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Operational Cycle: Saturday 06:00:00 to Friday 05:59:59 • Target: <span class="font-bold text-slate-700 katex-render">$\ge 70\%$</span> Unique Fleet Coverage
+          </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2.5">
@@ -183,12 +197,13 @@
               <option value="CEB1">CEB1 - Cebu</option>
               <option value="SAS">SAS - Davao</option>
               <option value="RZL">RZL - Rizal</option>
-              <option value="ELS">ELS - East</option>
+              <option value="ELS">ELS - East Fleet</option>
             </select>
           </div>
         </div>
       </div>
 
+      <!-- 4 Top KPI Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <!-- Total Inspections -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
@@ -218,7 +233,9 @@
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs relative overflow-hidden">
           <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Fleet Coverage</div>
           <div id="kpiFleetCoverage" class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mt-1">0.0%</div>
-          <div class="text-[11px] text-slate-400 mt-1">Benchmark: <strong class="text-slate-700 font-bold">$\ge 70\%$</strong></div>
+          <div class="text-[11px] text-slate-400 mt-1" id="kpiFleetCoverageSubtitle">
+            Benchmark: <strong class="text-slate-700 font-bold katex-render">$\ge 70\%$</strong>
+          </div>
           <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center opacity-60 pointer-events-none">
             <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
           </div>
@@ -235,6 +252,7 @@
         </div>
       </div>
 
+      <!-- Middle Grid: Depot Target Progress vs Infraction Breakdown -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Depot Target Progress Bars (2 cols on lg) -->
@@ -258,12 +276,26 @@
             <h3 class="text-sm font-bold text-slate-900">Violation Breakdown by Category</h3>
             <p class="text-xs text-slate-400">Appearance, Conduct, Exterior, Interior & Camera</p>
           </div>
-          <div class="relative w-full h-56 flex items-center justify-center">
+          <div class="relative w-full h-52 flex items-center justify-center">
             <canvas id="violationsChart"></canvas>
           </div>
           <div id="chartLegendBox" class="grid grid-cols-2 gap-2 text-[11px] text-slate-600 pt-2 border-t border-slate-100">
             <!-- Populated dynamically via JS -->
           </div>
+        </div>
+      </div>
+
+      <!-- Weekly Volume Day-by-Day Trend -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">7-Day Operational Audit Volume</h3>
+            <p class="text-xs text-slate-400">Audits distributed by operational day (Saturday 6 AM to Friday 6 AM)</p>
+          </div>
+          <span class="text-xs font-mono text-slate-500" id="weeklyTrendSubtitle">Daily Audit Cadence</span>
+        </div>
+        <div class="relative w-full h-48">
+          <canvas id="weeklyTrendChart"></canvas>
         </div>
       </div>
 
@@ -284,7 +316,7 @@
             </h2>
             <p class="text-xs text-slate-500 mt-0.5">Records are logged with timestamp, location, and driver proof</p>
           </div>
-          <span class="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg" id="formCurrentTimeBadge">Shift: 06:00-05:59</span>
+          <span class="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg" id="formCurrentTimeBadge">Shift Cutoff: 06:00 AM</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -315,7 +347,7 @@
               <option value="CEBU DEPOT">CEBU DEPOT (CEB1)</option>
               <option value="DAVAO DEPOT">DAVAO DEPOT (SAS)</option>
               <option value="RIZAL DEPOT">RIZAL DEPOT (RZL)</option>
-              <option value="ELS">ELS</option>
+              <option value="ELS">ELS - EAST FLEET</option>
             </select>
             <div class="mt-2 flex items-center gap-4">
               <label class="text-xs font-semibold text-slate-600 flex items-center gap-1.5 cursor-pointer">
@@ -330,7 +362,7 @@
           </div>
         </div>
 
-        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative">
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative" id="driverSearchWrapper">
           <div class="flex items-center justify-between">
             <label class="block text-xs font-bold uppercase tracking-wider text-slate-800">Driver & Assigned Unit *</label>
             <span class="text-[11px] text-emerald-600 font-semibold" id="driverMatchStatus">Type to autocomplete from roster</span>
@@ -351,7 +383,7 @@
             </div>
             <div>
               <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Inspected Plate No. *</label>
-              <input type="text" id="inputInspectedPlate" required placeholder="e.g. NGP 1234 / NF 1234" class="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-300 uppercase font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none" />
+              <input type="text" id="inputInspectedPlate" required placeholder="e.g. NGP 1234" class="w-full p-2.5 text-xs rounded-xl bg-white border border-slate-300 uppercase font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none" />
             </div>
             <div>
               <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Team Leader / Supervisor</label>
@@ -380,7 +412,10 @@
             <div class="flex items-center gap-1.5 text-rose-900 font-bold text-xs">
               <span>📋</span> Official QCF Checklist & Regulations (PH_OPS02)
             </div>
-            <span id="selectedViolationsCountBadge" class="text-[10px] font-bold text-rose-700 bg-rose-200/80 px-2 py-0.5 rounded-full">0 Selected</span>
+            <div class="flex items-center gap-2">
+              <span id="selectedViolationsCountBadge" class="text-[10px] font-bold text-rose-700 bg-rose-200/80 px-2 py-0.5 rounded-full">0 Selected</span>
+              <button type="button" onclick="portal.clearAllViolations()" class="text-[10px] font-bold text-rose-600 hover:text-rose-800 underline">Clear All</button>
+            </div>
           </div>
 
           <!-- Category Filter Tabs -->
@@ -444,7 +479,7 @@
           <!-- Preview Card -->
           <div id="auditPhotoPreviewBox" class="hidden p-3 bg-white rounded-xl border border-emerald-200 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <img id="auditPhotoImg" src="" alt="Audit Photo" class="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-2xs" />
+              <img id="auditPhotoImg" src="" alt="Audit Photo" class="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-2xs cursor-pointer" onclick="portal.openLightbox(this.src, 'Inspection Photo Evidence')" />
               <div>
                 <span id="auditPhotoName" class="block text-xs font-bold text-slate-800 truncate max-w-[180px]">photo.jpg</span>
                 <span id="auditPhotoSize" class="block text-[11px] font-semibold text-emerald-600">Attached</span>
@@ -500,7 +535,7 @@
             <!-- Preview Card -->
             <div id="ackPhotoPreviewContainer" class="hidden flex items-center justify-between p-2.5 bg-white border border-rose-200 rounded-xl">
               <div class="flex items-center gap-2.5">
-                <img id="ackPhotoPreviewImg" class="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-2xs" src="" alt="Proof Preview" />
+                <img id="ackPhotoPreviewImg" class="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-2xs cursor-pointer" onclick="portal.openLightbox(this.src, 'Driver Proof Evidence')" src="" alt="Proof Preview" />
                 <div>
                   <span id="ackPhotoPreviewName" class="block text-xs font-bold text-slate-800 truncate max-w-[170px]">slip.jpg</span>
                   <span id="ackPhotoPreviewSize" class="block text-[10px] text-emerald-600 font-semibold">Slip Attached</span>
@@ -528,11 +563,16 @@
           <h2 class="text-base font-bold text-slate-900">Weekly EOD Inspection Matrix</h2>
           <p class="text-xs text-slate-500 mt-0.5">Saturday to Friday operational breakdown with 6:00 AM daily cutoff attribution</p>
         </div>
-        <div class="flex items-center gap-2">
-          <label for="matrixWeekSelect" class="text-xs font-bold text-slate-600">Select Cycle:</label>
-          <select id="matrixWeekSelect" onchange="portal.renderWeeklyMatrix()" class="text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
-            <!-- Populated via JS -->
-          </select>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2">
+            <label for="matrixWeekSelect" class="text-xs font-bold text-slate-600">Select Cycle:</label>
+            <select id="matrixWeekSelect" onchange="portal.renderWeeklyMatrix()" class="text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          <button type="button" onclick="portal.exportMatrixToExcel()" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 border border-slate-200">
+            <span>📥</span> Export Matrix
+          </button>
         </div>
       </div>
 
@@ -546,7 +586,7 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 4: FLEET DRIVER REGISTRY (QCIperTXTX) -->
+    <!-- TAB 4: FLEET DRIVER REGISTRY -->
     <!-- ================================================================= -->
     <section id="tab-registry-view" class="hidden space-y-4">
       <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -571,6 +611,12 @@
             <option value="RZL">RZL</option>
             <option value="ELS">ELS</option>
           </select>
+          <select id="registryAuditStatusFilter" onchange="portal.renderDriverRegistryTable()" class="p-2.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Status</option>
+            <option value="AUDITED">Audited Drivers</option>
+            <option value="PENDING">Pending Audit (Deficit)</option>
+            <option value="VIOLATION">Flagged with Violation</option>
+          </select>
         </div>
       </div>
 
@@ -588,6 +634,7 @@
                 <th class="p-3 text-center">Without Viol.</th>
                 <th class="p-3 text-center">With Viol.</th>
                 <th class="p-3 text-center">Compliance</th>
+                <th class="p-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody id="registryTableBody" class="divide-y divide-slate-100 font-medium">
@@ -599,7 +646,7 @@
     </section>
 
     <!-- ================================================================= -->
-    <!-- TAB 5: RESPONSE LEDGER (INSPECTION LOGS WITH PROOF BADGES) -->
+    <!-- TAB 5: RESPONSE LEDGER (INSPECTION LOGS) -->
     <!-- ================================================================= -->
     <section id="tab-logs-view" class="hidden space-y-4">
       <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -612,8 +659,27 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <input type="text" id="logsSearchInput" oninput="portal.renderInspectionLogsTable()" placeholder="Search Log ID, Driver, Plate, Remarks..." class="p-2.5 text-xs rounded-xl bg-slate-50 border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 w-64" />
-          <button type="button" onclick="portal.exportInspectionsToExcel()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-2xs">
+          <input type="text" id="logsSearchInput" oninput="portal.renderInspectionLogsTable()" placeholder="Search ID, Driver, Plate, Remarks..." class="p-2 text-xs rounded-xl bg-slate-50 border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500 w-56" />
+          
+          <select id="logsDepotFilter" onchange="portal.renderInspectionLogsTable()" class="p-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Depots</option>
+            <option value="CAN">CAN</option>
+            <option value="LAS">LAS</option>
+            <option value="STA">STA</option>
+            <option value="TAG">TAG</option>
+            <option value="CEB1">CEB1</option>
+            <option value="SAS">SAS</option>
+            <option value="RZL">RZL</option>
+            <option value="ELS">ELS</option>
+          </select>
+
+          <select id="logsResultFilter" onchange="portal.renderInspectionLogsTable()" class="p-2 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-300 outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Findings</option>
+            <option value="CLEAN">Clean Only</option>
+            <option value="VIOLATION">Violations Only</option>
+          </select>
+
+          <button type="button" onclick="portal.exportInspectionsToExcel()" class="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-2xs">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
             <span>Export Excel</span>
           </button>
@@ -626,7 +692,7 @@
             <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 sticky top-0 z-10">
               <tr>
                 <th class="p-3">ID</th>
-                <th class="p-3">Date / Time</th>
+                <th class="p-3">Op Date / Week</th>
                 <th class="p-3">QC Inspector</th>
                 <th class="p-3">Driver Name</th>
                 <th class="p-3">SAP ID</th>
@@ -636,6 +702,7 @@
                 <th class="p-3 text-center">Finding</th>
                 <th class="p-3 text-center">Audit Proof</th>
                 <th class="p-3">Violations & Remarks</th>
+                <th class="p-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody id="logsTableBody" class="divide-y divide-slate-100 font-medium">
@@ -665,10 +732,13 @@
 
         <div class="flex flex-wrap gap-2.5">
           <button type="button" onclick="portal.pushLocalDataToCloud()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition flex items-center gap-1.5 shadow-md">
-            <span>🚀</span> Push Stored Data to Cloud
+            <span>🚀</span> Batch Push to Cloud
           </button>
           <button type="button" onclick="portal.forceCloudRefresh()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition flex items-center gap-1.5 border border-white/20">
             <span>🔄</span> Force Cloud Pull
+          </button>
+          <button type="button" onclick="portal.loadDemoData()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition flex items-center gap-1.5 shadow-md">
+            <span>⚡</span> Load Realistic Demo Fleet Data
           </button>
         </div>
       </div>
@@ -743,11 +813,14 @@
     </section>
   </main>
 
+  <!-- ================================================================= -->
+  <!-- MOBILE BOTTOM APP BAR -->
+  <!-- ================================================================= -->
   <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg px-2 py-1 flex justify-around">
-    <button onclick="portal.switchTab('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-slate-500">
+    <button onclick="portal.switchTab('dashboard')" id="mobile-nav-dashboard" class="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-emerald-600">
       <span class="text-base">📊</span> Dashboard
     </button>
-    <button onclick="portal.switchTab('inspection')" id="mobile-nav-inspection" class="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-emerald-600">
+    <button onclick="portal.switchTab('inspection')" id="mobile-nav-inspection" class="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-slate-500">
       <span class="text-base">✍️</span> Audit
     </button>
     <button onclick="portal.switchTab('matrix')" id="mobile-nav-matrix" class="flex flex-col items-center py-1 px-2 text-[10px] font-bold text-slate-500">
@@ -764,6 +837,9 @@
     </button>
   </nav>
 
+  <!-- ================================================================= -->
+  <!-- MODAL: AUDIT PROOF RECORDS & ACKNOWLEDGEMENT -->
+  <!-- ================================================================= -->
   <div id="acknowledgementModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white max-w-lg w-full rounded-3xl shadow-2xl border border-slate-200 overflow-hidden space-y-4 p-5 max-h-[90vh] overflow-y-auto custom-scrollbar">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -780,7 +856,7 @@
       <div id="ackModalAckProofWrap" class="space-y-1.5">
         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">✍️ Driver Acknowledgement Proof:</span>
         <div class="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center p-2 min-h-[140px]">
-          <img id="ackModalImg" class="max-h-64 w-auto object-contain rounded-lg" src="" alt="Driver Acknowledgement" />
+          <img id="ackModalImg" class="max-h-64 w-auto object-contain rounded-lg cursor-pointer" onclick="portal.openLightbox(this.src, 'Driver Acknowledgement Proof')" src="" alt="Driver Acknowledgement" />
         </div>
       </div>
 
@@ -788,7 +864,7 @@
       <div id="ackModalAuditPhotoWrap" class="hidden space-y-1.5 pt-1">
         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block">📸 Attached Inspection Photo / Condition Evidence:</span>
         <div class="border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 flex items-center justify-center p-2 min-h-[140px]">
-          <img id="ackModalAuditImg" class="max-h-64 w-auto object-contain rounded-lg" src="" alt="Inspection Evidence" />
+          <img id="ackModalAuditImg" class="max-h-64 w-auto object-contain rounded-lg cursor-pointer" onclick="portal.openLightbox(this.src, 'Inspection Photo Evidence')" src="" alt="Inspection Evidence" />
         </div>
       </div>
 
@@ -807,6 +883,24 @@
     </div>
   </div>
 
+  <!-- ================================================================= -->
+  <!-- MODAL: IMAGE LIGHTBOX (ZOOM EVIDENCE) -->
+  <!-- ================================================================= -->
+  <div id="lightboxModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative max-w-4xl w-full flex flex-col items-center">
+      <div class="w-full flex items-center justify-between text-white pb-3">
+        <span id="lightboxCaption" class="text-xs font-bold">Evidence Preview</span>
+        <button type="button" onclick="portal.closeLightbox()" class="text-white/70 hover:text-white p-1 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <img id="lightboxImage" src="" class="max-h-[82vh] w-auto object-contain rounded-2xl shadow-2xl border border-white/20" alt="Full Preview" />
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: CLOUD CONNECTION DIAGNOSTICS -->
+  <!-- ================================================================= -->
   <div id="cloudDiagnosticModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white max-w-md w-full rounded-3xl shadow-2xl border border-slate-200 overflow-hidden p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -856,8 +950,12 @@ service cloud.firestore {
     </div>
   </div>
 
+  <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
+  <!-- ================================================================= -->
+  <!-- APPLICATION SCRIPTS & ENGINE LOGIC -->
+  <!-- ================================================================= -->
   <script>
     // Official QCF 30-Point Checklist Standards and PH_OPS02 Internal Regulations
     const QCF_STANDARDS = [
@@ -920,7 +1018,7 @@ service cloud.firestore {
       'CEBU DEPOT': 'CEB1', 'CEB1': 'CEB1', 'CEBU': 'CEB1', 'CEB': 'CEB1',
       'DAVAO DEPOT': 'SAS', 'SAS': 'SAS', 'DAVAO': 'SAS', 'DVO': 'SAS',
       'RIZAL DEPOT': 'RZL', 'RZL': 'RZL', 'RIZAL': 'RZL',
-      'ELS': 'ELS', 'EAST': 'ELS', 'EAST FLEET': 'ELS'
+      'ELS': 'ELS', 'EAST': 'ELS', 'EAST FLEET': 'ELS', 'ELS - EAST FLEET': 'ELS'
     };
 
     function resolveDepotCode(raw) {
@@ -935,7 +1033,7 @@ service cloud.firestore {
       return 'CAN';
     }
 
-    // Fuzzy column resolver that strips question numbering (e.g., "1. Driver Name", "2. Plate No.") and formatting
+    // Fuzzy column resolver that strips question numbers, markdown symbols and formatting
     function fuzzyFindColumn(row, candidateKeys) {
       if (!row || typeof row !== 'object') return undefined;
 
@@ -998,8 +1096,8 @@ service cloud.firestore {
       return new Date();
     }
 
-    const DB_NAME = 'QCPortalDB';
-    const DB_VERSION = 1;
+    const DB_NAME = 'QCPortalDB_v2';
+    const DB_VERSION = 2;
 
     function openIndexedDB() {
       return new Promise((resolve, reject) => {
@@ -1032,6 +1130,17 @@ service cloud.firestore {
       });
     }
 
+    async function dbDeleteItem(storeName, key) {
+      const db = await openIndexedDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(tx.error);
+      });
+    }
+
     async function dbGetAll(storeName) {
       const db = await openIndexedDB();
       return new Promise((resolve, reject) => {
@@ -1050,7 +1159,7 @@ service cloud.firestore {
         const store = tx.objectStore(storeName);
         const req = store.clear();
         req.onsuccess = () => resolve();
-        req.onerror = () => reject(req.error);
+        req.onerror = () => reject(tx.error);
       });
     }
 
@@ -1075,6 +1184,7 @@ service cloud.firestore {
         this.sigCtx = null;
         this.isDrawing = false;
         this.hasDrawnSignature = false;
+        this.isSigEventsBound = false;
 
         // Firebase Cloud State
         this.firebaseApp = null;
@@ -1082,13 +1192,14 @@ service cloud.firestore {
         this.isCloudActive = false;
         this.deviceUid = 'qc-' + Math.random().toString(36).substring(2, 9);
         this.chartInstance = null;
+        this.trendChartInstance = null;
       }
 
-      // Initialize Application
       async init() {
         this.setupSignatureCanvas();
         this.renderViolationChecklist();
         this.updateHeaderUid();
+        this.bindGlobalEvents();
 
         // Load local cache first for instant startup
         await this.loadLocalData();
@@ -1103,6 +1214,30 @@ service cloud.firestore {
         this.renderDriverRegistryTable();
         this.renderInspectionLogsTable();
         this.updateDataCenterCounters();
+        this.renderLatexInUi();
+      }
+
+      bindGlobalEvents() {
+        // Close autocomplete when clicking outside
+        document.addEventListener('click', (e) => {
+          const wrapper = document.getElementById('driverSearchWrapper');
+          const list = document.getElementById('driverAutocompleteList');
+          if (list && wrapper && !wrapper.contains(e.target)) {
+            list.classList.add('hidden');
+          }
+        });
+      }
+
+      renderLatexInUi() {
+        if (window.renderMathInElement) {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false }
+            ],
+            throwOnError: false
+          });
+        }
       }
 
       updateHeaderUid() {
@@ -1129,16 +1264,30 @@ service cloud.firestore {
 
       getOperationalWeek(dateInput) {
         const opD = this.getOperationalDate(dateInput);
-        const target = new Date(opD.valueOf());
-        const dayNr = (opD.getDay() + 1) % 7; // Sat=0, Sun=1, ..., Fri=6
-        target.setDate(target.getDate() - dayNr + 3); // Align to mid-week Tuesday
-        const firstTuesday = target.valueOf();
-        target.setMonth(0, 1);
-        if (target.getDay() !== 2) {
-          target.setMonth(0, 1 + ((9 - target.getDay()) % 7));
+        // Operational cycle starts Saturday and ends Friday
+        // Day index relative to Saturday: Sat=0, Sun=1, ..., Fri=6
+        const daysSinceSaturday = (opD.getDay() + 1) % 7;
+        const satStart = new Date(opD.getFullYear(), opD.getMonth(), opD.getDate() - daysSinceSaturday);
+        
+        // Calculate standard week number from Saturday anchor
+        const startOfYear = new Date(satStart.getFullYear(), 0, 1);
+        const diffDays = Math.floor((satStart - startOfYear) / (24 * 3600 * 1000));
+        const weekNum = Math.max(1, Math.min(53, Math.ceil((diffDays + startOfYear.getDay() + 1) / 7)));
+        return `W${weekNum}`;
+      }
+
+      getOperationalWeekRangeText(weekCode) {
+        // Find inspections matching this week code to get actual range or fallback to calculation
+        const match = this.inspections.find(i => i.week_number === weekCode);
+        if (match && match.completion_time) {
+          const opD = this.getOperationalDate(match.completion_time);
+          const daysSinceSaturday = (opD.getDay() + 1) % 7;
+          const satStart = new Date(opD.getFullYear(), opD.getMonth(), opD.getDate() - daysSinceSaturday);
+          const friEnd = new Date(satStart.getFullYear(), satStart.getMonth(), satStart.getDate() + 6);
+          const opts = { month: 'short', day: 'numeric' };
+          return `${weekCode} (${satStart.toLocaleDateString('en-US', opts)} - ${friEnd.toLocaleDateString('en-US', opts)})`;
         }
-        const weekNum = 1 + Math.ceil((firstTuesday - target) / (7 * 24 * 3600 * 1000));
-        return `W${Math.max(1, Math.min(53, isNaN(weekNum) ? 39 : weekNum))}`;
+        return weekCode;
       }
 
       async initCloudSync(isManualTest = false) {
@@ -1169,7 +1318,6 @@ service cloud.firestore {
             this.firebaseApp = firebase.app();
           }
 
-          // Optional Anonymous Auth
           try {
             await firebase.auth().signInAnonymously();
           } catch (authErr) {
@@ -1178,8 +1326,8 @@ service cloud.firestore {
 
           this.firestore = firebase.firestore();
 
-          // Test connection with a quick read
-          const testSnap = await this.firestore.collection('qc_inspections').limit(5).get();
+          // Quick probe
+          await this.firestore.collection('qc_inspections').limit(5).get();
           this.isCloudActive = true;
 
           if (pill) {
@@ -1192,7 +1340,6 @@ service cloud.firestore {
             diagSpan.className = 'font-bold text-emerald-600';
           }
 
-          // Listen for real-time inspection updates from other QCs
           this.setupRealtimeListeners();
 
           if (isManualTest) {
@@ -1221,7 +1368,6 @@ service cloud.firestore {
       setupRealtimeListeners() {
         if (!this.firestore) return;
 
-        // Listen for new audits logged across nationwide QCs
         this.firestore.collection('qc_inspections').orderBy('id', 'desc').limit(200).onSnapshot((snapshot) => {
           let hasNew = false;
           snapshot.docChanges().forEach((change) => {
@@ -1236,6 +1382,7 @@ service cloud.firestore {
 
           if (hasNew) {
             dbPutBatch('inspections', this.inspections);
+            this.populateOpWeekFilter();
             this.renderDashboard();
             this.renderWeeklyMatrix();
             this.renderInspectionLogsTable();
@@ -1249,7 +1396,6 @@ service cloud.firestore {
           this.drivers = await dbGetAll('drivers');
           this.inspections = await dbGetAll('inspections');
 
-          // Ensure valid operational dates
           let needsUpdate = false;
           this.inspections.forEach(i => {
             if (!i.date && i.completion_time) {
@@ -1271,20 +1417,14 @@ service cloud.firestore {
         if (!this.sigCanvas) return;
         this.sigCtx = this.sigCanvas.getContext('2d');
 
-        const resizeCanvas = () => {
-          const rect = this.sigCanvas.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            this.sigCanvas.width = rect.width;
-            this.sigCanvas.height = rect.height;
-            this.sigCtx.lineWidth = 2.5;
-            this.sigCtx.lineCap = 'round';
-            this.sigCtx.lineJoin = 'round';
-            this.sigCtx.strokeStyle = '#0f172a';
-          }
-        };
+        this.resizeSignatureCanvas();
 
-        window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 200);
+        if (this.isSigEventsBound) return;
+        this.isSigEventsBound = true;
+
+        window.addEventListener('resize', () => {
+          this.resizeSignatureCanvas(true);
+        });
 
         const getPos = (e) => {
           const rect = this.sigCanvas.getBoundingClientRect();
@@ -1323,6 +1463,30 @@ service cloud.firestore {
         this.sigCanvas.addEventListener('touchend', endDraw);
       }
 
+      resizeSignatureCanvas(preserveDrawing = false) {
+        if (!this.sigCanvas) return;
+        let savedData = null;
+        if (preserveDrawing && this.hasDrawnSignature) {
+          savedData = this.sigCanvas.toDataURL();
+        }
+
+        const rect = this.sigCanvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          this.sigCanvas.width = rect.width;
+          this.sigCanvas.height = rect.height;
+          this.sigCtx.lineWidth = 2.5;
+          this.sigCtx.lineCap = 'round';
+          this.sigCtx.lineJoin = 'round';
+          this.sigCtx.strokeStyle = '#0f172a';
+
+          if (savedData) {
+            const img = new Image();
+            img.onload = () => this.sigCtx.drawImage(img, 0, 0, rect.width, rect.height);
+            img.src = savedData;
+          }
+        }
+      }
+
       clearSignaturePad() {
         if (!this.sigCtx || !this.sigCanvas) return;
         this.sigCtx.clearRect(0, 0, this.sigCanvas.width, this.sigCanvas.height);
@@ -1334,46 +1498,59 @@ service cloud.firestore {
         return this.sigCanvas.toDataURL('image/png');
       }
 
-      handleAuditPhoto(e) {
+      // Compact image compressor ensuring smooth offline DB & Firestore operations
+      compressImage(file, maxDim = 800, quality = 0.65) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const img = new Image();
+            img.onload = () => {
+              let w = img.width, h = img.height;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                else { w = Math.round((w * maxDim) / h); h = maxDim; }
+              }
+              const cvs = document.createElement('canvas');
+              cvs.width = w; cvs.height = h;
+              cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+              const dataUrl = cvs.toDataURL('image/jpeg', quality);
+              resolve({ dataUrl, width: w, height: h });
+            };
+            img.onerror = reject;
+            img.src = evt.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async handleAuditPhoto(e) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 1000;
-            let w = img.width, h = img.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-              else { w = Math.round((w * maxDim) / h); h = maxDim; }
-            }
-            const cvs = document.createElement('canvas');
-            cvs.width = w; cvs.height = h;
-            cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+        try {
+          const result = await this.compressImage(file, 800, 0.7);
+          this.uploadedAuditPhotoDataUrl = result.dataUrl;
+          this.uploadedAuditPhotoName = file.name;
 
-            this.uploadedAuditPhotoDataUrl = cvs.toDataURL('image/jpeg', 0.75);
-            this.uploadedAuditPhotoName = file.name;
+          const previewImg = document.getElementById('auditPhotoImg');
+          const previewName = document.getElementById('auditPhotoName');
+          const previewSize = document.getElementById('auditPhotoSize');
+          const previewBox = document.getElementById('auditPhotoPreviewBox');
+          const badge = document.getElementById('auditPhotoStatusBadge');
 
-            const previewImg = document.getElementById('auditPhotoImg');
-            const previewName = document.getElementById('auditPhotoName');
-            const previewSize = document.getElementById('auditPhotoSize');
-            const previewBox = document.getElementById('auditPhotoPreviewBox');
-            const badge = document.getElementById('auditPhotoStatusBadge');
-
-            if (previewImg) previewImg.src = this.uploadedAuditPhotoDataUrl;
-            if (previewName) previewName.innerText = file.name;
-            if (previewSize) previewSize.innerText = `${Math.round(this.uploadedAuditPhotoDataUrl.length / 1024)} KB Attached`;
-            if (previewBox) previewBox.classList.remove('hidden');
-            if (badge) {
-              badge.innerText = 'Photo Attached';
-              badge.className = 'text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full';
-            }
-            this.showToast('Inspection Photo Attached', 'Vehicle evidence ready.', 'info');
-          };
-          img.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
+          if (previewImg) previewImg.src = this.uploadedAuditPhotoDataUrl;
+          if (previewName) previewName.innerText = file.name;
+          if (previewSize) previewSize.innerText = `${Math.round(this.uploadedAuditPhotoDataUrl.length / 1024)} KB Attached`;
+          if (previewBox) previewBox.classList.remove('hidden');
+          if (badge) {
+            badge.innerText = 'Photo Attached';
+            badge.className = 'text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full';
+          }
+          this.showToast('Inspection Photo Attached', 'Vehicle evidence ready.', 'info');
+        } catch (err) {
+          this.showToast('Photo Error', 'Failed to process image file.', 'error');
+        }
       }
 
       removeAuditPhoto() {
@@ -1392,42 +1569,29 @@ service cloud.firestore {
         }
       }
 
-      handleAcknowledgementPhoto(e) {
+      async handleAcknowledgementPhoto(e) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 1000;
-            let w = img.width, h = img.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-              else { w = Math.round((w * maxDim) / h); h = maxDim; }
-            }
-            const cvs = document.createElement('canvas');
-            cvs.width = w; cvs.height = h;
-            cvs.getContext('2d').drawImage(img, 0, 0, w, h);
+        try {
+          const result = await this.compressImage(file, 800, 0.7);
+          this.uploadedPhotoDataUrl = result.dataUrl;
+          this.uploadedPhotoName = file.name;
 
-            this.uploadedPhotoDataUrl = cvs.toDataURL('image/jpeg', 0.75);
-            this.uploadedPhotoName = file.name;
+          const previewImg = document.getElementById('ackPhotoPreviewImg');
+          const previewName = document.getElementById('ackPhotoPreviewName');
+          const previewSize = document.getElementById('ackPhotoPreviewSize');
+          const previewBox = document.getElementById('ackPhotoPreviewContainer');
 
-            const previewImg = document.getElementById('ackPhotoPreviewImg');
-            const previewName = document.getElementById('ackPhotoPreviewName');
-            const previewSize = document.getElementById('ackPhotoPreviewSize');
-            const previewBox = document.getElementById('ackPhotoPreviewContainer');
+          if (previewImg) previewImg.src = this.uploadedPhotoDataUrl;
+          if (previewName) previewName.innerText = file.name;
+          if (previewSize) previewSize.innerText = `${Math.round(this.uploadedPhotoDataUrl.length / 1024)} KB Attached`;
+          if (previewBox) previewBox.classList.remove('hidden');
 
-            if (previewImg) previewImg.src = this.uploadedPhotoDataUrl;
-            if (previewName) previewName.innerText = file.name;
-            if (previewSize) previewSize.innerText = `${Math.round(this.uploadedPhotoDataUrl.length / 1024)} KB Attached`;
-            if (previewBox) previewBox.classList.remove('hidden');
-
-            this.showToast('Acknowledgement Attached', 'Signed physical slip photo ready.', 'info');
-          };
-          img.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
+          this.showToast('Acknowledgement Attached', 'Signed physical slip photo ready.', 'info');
+        } catch (err) {
+          this.showToast('Photo Error', 'Failed to process slip photo.', 'error');
+        }
       }
 
       removeAcknowledgementPhoto() {
@@ -1453,6 +1617,7 @@ service cloud.firestore {
           if (tabPhoto) tabPhoto.className = 'py-1 px-2.5 rounded-lg text-[11px] font-bold text-slate-600 hover:text-slate-900 transition';
           if (boxSig) boxSig.classList.remove('hidden');
           if (boxPhoto) boxPhoto.classList.add('hidden');
+          setTimeout(() => this.resizeSignatureCanvas(true), 50);
         } else {
           if (tabPhoto) tabPhoto.className = 'py-1 px-2.5 rounded-lg text-[11px] font-bold bg-white text-slate-800 shadow-2xs transition';
           if (tabSig) tabSig.className = 'py-1 px-2.5 rounded-lg text-[11px] font-bold text-slate-600 hover:text-slate-900 transition';
@@ -1479,6 +1644,12 @@ service cloud.firestore {
           this.updateViolationsBadge();
           this.renderViolationChecklist();
         }
+      }
+
+      clearAllViolations() {
+        this.selectedViolations.clear();
+        this.updateViolationsBadge();
+        this.renderViolationChecklist();
       }
 
       filterChecklistCategory(cat) {
@@ -1527,6 +1698,9 @@ service cloud.firestore {
           this.selectedViolations.delete(id);
         } else {
           this.selectedViolations.add(id);
+          if (!this.hasViolation) {
+            this.setFindingViolation(true);
+          }
         }
         this.updateViolationsBadge();
         this.renderViolationChecklist();
@@ -1609,6 +1783,12 @@ service cloud.firestore {
         if (status) status.innerText = `Verified SAP #${d.sap_id} (${d.depot_code})`;
       }
 
+      // Quick action from Driver Registry
+      quickAuditDriver(sapId) {
+        this.switchTab('inspection');
+        this.selectDriverMatch(sapId);
+      }
+
       async handleFormSubmit(e) {
         e.preventDefault();
 
@@ -1618,10 +1798,16 @@ service cloud.firestore {
         const depotCode = DEPOT_LOOKUP[depotRaw] || 'CAN';
         const type = document.querySelector('input[name="inspectionType"]:checked')?.value || 'Inside Depot Inspection';
         const driverName = document.getElementById('inputDriverName').value.trim();
-        const sapIdVal = document.getElementById('inputSapId').value.trim();
+        let sapIdVal = document.getElementById('inputSapId').value.trim();
         const inspectedPlate = document.getElementById('inputInspectedPlate').value.trim().toUpperCase();
         const supervisor = document.getElementById('inputSupervisor').value.trim();
         const remarks = document.getElementById('inputViolationRemarks').value.trim();
+
+        // Auto-resolve SAP ID if left empty but driver name matches roster
+        if (!sapIdVal && this.drivers.length > 0) {
+          const matched = this.drivers.find(d => d.full_name && d.full_name.toLowerCase() === driverName.toLowerCase());
+          if (matched) sapIdVal = String(matched.sap_id);
+        }
 
         // Compile violation text
         const violationTitles = Array.from(this.selectedViolations).map(id => {
@@ -1679,7 +1865,6 @@ service cloud.firestore {
           }
         }
 
-        // Feedback chime via Web Audio API
         this.playSuccessTone();
         this.showToast('Inspection Logged & Broadcasted', `Audit #${nextId} for ${driverName} recorded with proof.`, 'success');
 
@@ -1691,6 +1876,7 @@ service cloud.firestore {
         this.removeAuditPhoto();
 
         // Refresh views
+        this.populateOpWeekFilter();
         this.renderDashboard();
         this.renderWeeklyMatrix();
         this.renderDriverRegistryTable();
@@ -1699,14 +1885,37 @@ service cloud.firestore {
         this.switchTab('logs');
       }
 
+      async deleteInspection(id) {
+        if (!window.confirm(`Are you sure you want to delete audit #${id}?`)) return;
+
+        const numId = Number(id);
+        this.inspections = this.inspections.filter(i => Number(i.id) !== numId);
+        await dbDeleteItem('inspections', numId);
+
+        if (this.firestore && this.isCloudActive) {
+          try {
+            await this.firestore.collection('qc_inspections').doc(String(id)).delete();
+          } catch (e) {
+            console.warn('Cloud delete note:', e);
+          }
+        }
+
+        this.showToast('Audit Deleted', `Record #${id} has been removed.`, 'info');
+        this.populateOpWeekFilter();
+        this.renderDashboard();
+        this.renderWeeklyMatrix();
+        this.renderInspectionLogsTable();
+        this.updateDataCenterCounters();
+      }
+
       playSuccessTone() {
         try {
           const ctx = new (window.AudioContext || window.webkitAudioContext)();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
           gain.gain.setValueAtTime(0.2, ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
           osc.connect(gain);
@@ -1726,15 +1935,30 @@ service cloud.firestore {
           if (i.week_number) weeks.add(i.week_number);
         });
 
-        // Add standard week cycle options
-        ['W39', 'W38', 'W37', 'W36', 'W35'].forEach(w => weeks.add(w));
+        // Always ensure the current operational week is in the list
+        const currentOpWeek = this.getOperationalWeek(new Date());
+        weeks.add(currentOpWeek);
 
-        const sorted = Array.from(weeks).sort().reverse();
+        const sorted = Array.from(weeks).sort((a, b) => {
+          const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+          const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+          return numB - numA;
+        });
+
+        const currentVal = select.value;
         select.innerHTML = '<option value="ALL">All Operational Weeks (Cumulative)</option>' +
-          sorted.map(w => `<option value="${w}">${w}</option>`).join('');
+          sorted.map(w => `<option value="${w}">${this.getOperationalWeekRangeText(w)}</option>`).join('');
+
+        if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+          select.value = currentVal;
+        }
 
         if (matrixSelect) {
-          matrixSelect.innerHTML = sorted.map(w => `<option value="${w}">${w}</option>`).join('');
+          const currentMatrixVal = matrixSelect.value;
+          matrixSelect.innerHTML = sorted.map(w => `<option value="${w}">${this.getOperationalWeekRangeText(w)}</option>`).join('');
+          if (currentMatrixVal && Array.from(matrixSelect.options).some(o => o.value === currentMatrixVal)) {
+            matrixSelect.value = currentMatrixVal;
+          }
         }
       }
 
@@ -1761,18 +1985,31 @@ service cloud.firestore {
 
         // Relevant denominator drivers for fleet coverage
         const eligibleDrivers = this.drivers.filter(d => depotFilter === 'ALL' || d.depot_code === depotFilter);
-        const totalEligibleCount = eligibleDrivers.length || (this.drivers.length > 0 ? this.drivers.length : 1);
-        const coverageRate = ((uniqueDriversCount / totalEligibleCount) * 100).toFixed(1);
+        const totalEligibleCount = eligibleDrivers.length;
+        
+        let coverageRate = '0.0';
+        let coverageSub = 'Benchmark: $\\ge 70\\%$ Target';
+
+        if (totalEligibleCount > 0) {
+          coverageRate = ((uniqueDriversCount / totalEligibleCount) * 100).toFixed(1);
+          coverageSub = `${uniqueDriversCount} of ${totalEligibleCount} active units`;
+        } else {
+          coverageRate = uniqueDriversCount > 0 ? `${uniqueDriversCount} (No Roster)` : '0.0%';
+          coverageSub = 'Upload drivers.xlsx for %';
+        }
 
         // Update KPI Cards
         document.getElementById('kpiTotalAudits').innerText = totalAudits.toLocaleString();
         document.getElementById('kpiUniqueDrivers').innerText = uniqueDriversCount.toLocaleString();
-        document.getElementById('kpiFleetCoverage').innerText = `${coverageRate}%`;
+        document.getElementById('kpiFleetCoverage').innerText = totalEligibleCount > 0 ? `${coverageRate}%` : coverageRate;
+        document.getElementById('kpiFleetCoverageSubtitle').innerText = coverageSub;
         document.getElementById('kpiViolationsCount').innerText = violationsCount.toLocaleString();
         document.getElementById('kpiViolationRatio').innerText = `${violationRatio}% Non-compliance Rate`;
 
         this.renderDepotProgressBars(filtered);
         this.renderViolationsChart(filtered);
+        this.renderWeeklyTrendChart(filtered);
+        this.renderLatexInUi();
       }
 
       renderDepotProgressBars(audits) {
@@ -1787,12 +2024,34 @@ service cloud.firestore {
 
         container.innerHTML = depots.map(code => {
           const depotRoster = this.drivers.filter(d => d.depot_code === code);
-          const rosterTotal = depotRoster.length || 1;
+          const rosterTotal = depotRoster.length;
 
           const depotAudits = audits.filter(a => a.depot_code === code);
           const uniqueChecked = new Set(depotAudits.map(a => a.matched_sap_id || a.driver_name)).size;
-          const pct = Math.min(100, Math.round((uniqueChecked / rosterTotal) * 100));
-          const isTargetMet = pct >= 70;
+          
+          let pct = 0;
+          let progressText = '';
+          let targetDiffText = '';
+          let isTargetMet = false;
+
+          if (rosterTotal > 0) {
+            pct = Math.min(100, Math.round((uniqueChecked / rosterTotal) * 100));
+            isTargetMet = pct >= 70;
+            const targetUnitsNeeded = Math.ceil(rosterTotal * 0.7);
+            const deficit = targetUnitsNeeded - uniqueChecked;
+
+            if (deficit <= 0) {
+              targetDiffText = `<span class="text-emerald-600 font-bold">Target met! (+${Math.abs(deficit)} over 70%)</span>`;
+            } else {
+              targetDiffText = `<span class="text-amber-600 font-semibold">Needs ${deficit} more unique unit${deficit === 1 ? '' : 's'} to hit 70%</span>`;
+            }
+            progressText = `${uniqueChecked}/${rosterTotal} (${pct}%)`;
+          } else {
+            progressText = `${uniqueChecked} audits (Roster pending)`;
+            targetDiffText = `<span class="text-slate-400">Upload roster to calculate 70%</span>`;
+          }
+
+          let barColor = isTargetMet ? 'bg-emerald-500' : (pct >= 40 ? 'bg-amber-500' : 'bg-slate-400');
 
           return `
             <div class="space-y-1">
@@ -1802,12 +2061,15 @@ service cloud.firestore {
                   <span class="text-slate-400">(${depotNames[code] || code})</span>
                 </div>
                 <div class="flex items-center gap-2 font-mono">
-                  <span class="text-slate-500">${uniqueChecked}/${rosterTotal}</span>
-                  <span class="font-bold ${isTargetMet ? 'text-emerald-600' : 'text-slate-700'}">${pct}%</span>
+                  <span class="text-slate-600 font-bold">${progressText}</span>
                 </div>
               </div>
               <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
-                <div class="h-full rounded-full transition-all duration-500 ${isTargetMet ? 'bg-emerald-500' : 'bg-slate-400'}" style="width: ${pct}%"></div>
+                <div class="h-full rounded-full transition-all duration-500 ${barColor}" style="width: ${pct}%"></div>
+              </div>
+              <div class="text-[10px] flex justify-between items-center text-slate-500">
+                <span>${targetDiffText}</span>
+                <span>${isTargetMet ? '✅ 70% Achieved' : '🎯 70% Target'}</span>
               </div>
             </div>
           `;
@@ -1829,8 +2091,6 @@ service cloud.firestore {
           if (txt.includes('INTERIOR') || txt.includes('SEAT') || txt.includes('OR/CR') || txt.includes('POS') || txt.includes('A/C')) interior++;
           if (txt.includes('CAMERA') || txt.includes('OPS-CAM') || txt.includes('TAMPER') || txt.includes('SAFETY') || txt.includes('SEALANT')) camera++;
         });
-
-        const total = appearance + conduct + exterior + interior + camera || 1;
 
         if (this.chartInstance) {
           this.chartInstance.destroy();
@@ -1867,14 +2127,140 @@ service cloud.firestore {
         }
       }
 
+      renderWeeklyTrendChart(audits) {
+        const canvas = document.getElementById('weeklyTrendChart');
+        if (!canvas) return;
+
+        const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const cleanCounts = [0, 0, 0, 0, 0, 0, 0];
+        const violCounts = [0, 0, 0, 0, 0, 0, 0];
+
+        audits.forEach(a => {
+          const compD = new Date(a.completion_time);
+          const opD = this.getOperationalDate(compD);
+          const dayName = opD.toLocaleDateString('en-US', { weekday: 'long' });
+          const idx = days.indexOf(dayName);
+          if (idx !== -1) {
+            if (a.has_violation) violCounts[idx]++;
+            else cleanCounts[idx]++;
+          }
+        });
+
+        if (this.trendChartInstance) {
+          this.trendChartInstance.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+        this.trendChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Sat (6AM)', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri (To 6AM)'],
+            datasets: [
+              {
+                label: 'Clean Audits',
+                data: cleanCounts,
+                backgroundColor: '#10b981',
+                borderRadius: 6
+              },
+              {
+                label: 'Violations Flagged',
+                data: violCounts,
+                backgroundColor: '#f43f5e',
+                borderRadius: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+            },
+            plugins: {
+              legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+          }
+        });
+      }
+
       renderWeeklyMatrix() {
         const table = document.getElementById('weeklyMatrixTable');
-        const selectedWeek = document.getElementById('matrixWeekSelect')?.value || 'W39';
+        const selectedWeek = document.getElementById('matrixWeekSelect')?.value || this.getOperationalWeek(new Date());
         if (!table) return;
 
         const audits = this.inspections.filter(i => i.week_number === selectedWeek);
         const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        const inspectors = ['QC JB', 'QC PM', 'QC GR', 'QC AA', 'QC RC'];
+
+        // Determine all active QC inspectors dynamically
+        const detectedQcs = new Set(['QC JB', 'QC PM', 'QC GR', 'QC AA', 'QC RC']);
+        audits.forEach(a => {
+          if (a.qc_initials) detectedQcs.add(a.qc_initials.trim().toUpperCase());
+        });
+        const inspectors = Array.from(detectedQcs).sort();
+
+        // Column accumulators
+        const colTotalsIn = {};
+        const colTotalsOut = {};
+        inspectors.forEach(qc => {
+          colTotalsIn[qc] = 0;
+          colTotalsOut[qc] = 0;
+        });
+
+        let grandCycleTotal = 0;
+
+        const rowsHtml = days.map(dayName => {
+          let dayTotal = 0;
+          const colsHtml = inspectors.map(qc => {
+            const cleanQc = qc.replace('QC ', '').trim();
+            const inCount = audits.filter(a => {
+              const compD = new Date(a.completion_time);
+              const opD = this.getOperationalDate(compD);
+              const dName = opD.toLocaleDateString('en-US', { weekday: 'long' });
+              const isQc = (a.qc_initials || '').toUpperCase().includes(cleanQc);
+              const isIn = !a.inspection_type || a.inspection_type.includes('Inside');
+              return dName === dayName && isQc && isIn;
+            }).length;
+
+            const outCount = audits.filter(a => {
+              const compD = new Date(a.completion_time);
+              const opD = this.getOperationalDate(compD);
+              const dName = opD.toLocaleDateString('en-US', { weekday: 'long' });
+              const isQc = (a.qc_initials || '').toUpperCase().includes(cleanQc);
+              const isOut = a.inspection_type && a.inspection_type.includes('Outside');
+              return dName === dayName && isQc && isOut;
+            }).length;
+
+            colTotalsIn[qc] += inCount;
+            colTotalsOut[qc] += outCount;
+            dayTotal += (inCount + outCount);
+
+            return `
+              <td class="p-2 text-center font-mono border-r border-slate-200 ${inCount > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}">${inCount || '-'}</td>
+              <td class="p-2 text-center font-mono border-r border-slate-200 ${outCount > 0 ? 'text-blue-700 font-bold' : 'text-slate-400'}">${outCount || '-'}</td>
+            `;
+          }).join('');
+
+          grandCycleTotal += dayTotal;
+
+          return `
+            <tr class="hover:bg-slate-50/80">
+              <td class="p-2.5 font-bold text-slate-800 border-r border-slate-200">${dayName}</td>
+              ${colsHtml}
+              <td class="p-2 text-center font-mono font-bold text-slate-900 bg-slate-50/50">${dayTotal}</td>
+            </tr>
+          `;
+        }).join('');
+
+        // Bottom summary row
+        const bottomTotalsHtml = inspectors.map(qc => {
+          const totIn = colTotalsIn[qc];
+          const totOut = colTotalsOut[qc];
+          return `
+            <td class="p-2 text-center font-mono font-bold border-r border-slate-200 bg-emerald-50 text-emerald-900">${totIn}</td>
+            <td class="p-2 text-center font-mono font-bold border-r border-slate-200 bg-blue-50 text-blue-900">${totOut}</td>
+          `;
+        }).join('');
 
         table.innerHTML = `
           <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
@@ -1895,42 +2281,26 @@ service cloud.firestore {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            ${days.map(dayName => {
-              let dayTotal = 0;
-              return `
-                <tr class="hover:bg-slate-50/80">
-                  <td class="p-2.5 font-bold text-slate-800 border-r border-slate-200">${dayName}</td>
-                  ${inspectors.map(qc => {
-                    const inCount = audits.filter(a => {
-                      const d = new Date(a.completion_time);
-                      const opD = this.getOperationalDate(d);
-                      const dName = opD.toLocaleDateString('en-US', { weekday: 'long' });
-                      const isQc = (a.qc_initials || '').toUpperCase().includes(qc.replace('QC ', ''));
-                      const isIn = !a.inspection_type || a.inspection_type.includes('Inside');
-                      return dName === dayName && isQc && isIn;
-                    }).length;
-
-                    const outCount = audits.filter(a => {
-                      const d = new Date(a.completion_time);
-                      const opD = this.getOperationalDate(d);
-                      const dName = opD.toLocaleDateString('en-US', { weekday: 'long' });
-                      const isQc = (a.qc_initials || '').toUpperCase().includes(qc.replace('QC ', ''));
-                      const isOut = a.inspection_type && a.inspection_type.includes('Outside');
-                      return dName === dayName && isQc && isOut;
-                    }).length;
-
-                    dayTotal += (inCount + outCount);
-                    return `
-                      <td class="p-2 text-center font-mono border-r border-slate-200 ${inCount > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}">${inCount || '-'}</td>
-                      <td class="p-2 text-center font-mono border-r border-slate-200 ${outCount > 0 ? 'text-blue-700 font-bold' : 'text-slate-400'}">${outCount || '-'}</td>
-                    `;
-                  }).join('')}
-                  <td class="p-2 text-center font-mono font-bold text-slate-900 bg-slate-50/50">${dayTotal}</td>
-                </tr>
-              `;
-            }).join('')}
+            ${rowsHtml}
           </tbody>
+          <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-300">
+            <tr>
+              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">Cycle Totals</td>
+              ${bottomTotalsHtml}
+              <td class="p-2 text-center font-mono font-extrabold text-emerald-800 bg-emerald-100">${grandCycleTotal}</td>
+            </tr>
+          </tfoot>
         `;
+      }
+
+      exportMatrixToExcel() {
+        const table = document.getElementById('weeklyMatrixTable');
+        const selectedWeek = document.getElementById('matrixWeekSelect')?.value || 'Cycle';
+        if (!table) return;
+
+        const wb = XLSX.utils.table_to_book(table, { sheet: "EOD_Matrix" });
+        XLSX.writeFile(wb, `QC_EOD_Matrix_${selectedWeek}.xlsx`);
+        this.showToast('Matrix Exported', `Downloaded spreadsheet for ${selectedWeek}.`, 'success');
       }
 
       renderDriverRegistryTable() {
@@ -1940,19 +2310,29 @@ service cloud.firestore {
 
         const q = (document.getElementById('registrySearchInput')?.value || '').toLowerCase().trim();
         const depot = document.getElementById('registryDepotFilter')?.value || 'ALL';
+        const auditStatus = document.getElementById('registryAuditStatusFilter')?.value || 'ALL';
 
         const filtered = this.drivers.filter(d => {
           const matchDepot = depot === 'ALL' || d.depot_code === depot;
           const matchQ = !q || (d.full_name && d.full_name.toLowerCase().includes(q)) ||
             (d.sap_id && String(d.sap_id).includes(q)) ||
             (d.plate_number && d.plate_number.toLowerCase().includes(q));
-          return matchDepot && matchQ;
+
+          if (!matchDepot || !matchQ) return false;
+
+          const audits = this.inspections.filter(i => Number(i.matched_sap_id) === Number(d.sap_id));
+          const hasViol = audits.some(i => i.has_violation);
+
+          if (auditStatus === 'AUDITED') return audits.length > 0;
+          if (auditStatus === 'PENDING') return audits.length === 0;
+          if (auditStatus === 'VIOLATION') return hasViol;
+          return true;
         }).slice(0, 100);
 
         if (badge) badge.innerText = `${this.drivers.length.toLocaleString()} Drivers`;
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No matching drivers found.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400">No matching drivers found in roster.</td></tr>`;
           return;
         }
 
@@ -1977,6 +2357,11 @@ service cloud.firestore {
                   ${violCount > 0 ? 'Flagged' : (totalAudits > 0 ? 'Clean' : 'Pending')}
                 </span>
               </td>
+              <td class="p-3 text-center">
+                <button type="button" onclick="portal.quickAuditDriver(${d.sap_id})" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
+                  Audit Unit
+                </button>
+              </td>
             </tr>
           `;
         }).join('');
@@ -1988,19 +2373,27 @@ service cloud.firestore {
         if (!tbody) return;
 
         const q = (document.getElementById('logsSearchInput')?.value || '').toLowerCase().trim();
+        const depot = document.getElementById('logsDepotFilter')?.value || 'ALL';
+        const findingFilter = document.getElementById('logsResultFilter')?.value || 'ALL';
 
         const filtered = this.inspections.filter(i => {
-          if (!q) return true;
-          return String(i.id).includes(q) ||
+          const matchDepot = depot === 'ALL' || i.depot_code === depot;
+          let matchFinding = true;
+          if (findingFilter === 'CLEAN') matchFinding = !i.has_violation;
+          if (findingFilter === 'VIOLATION') matchFinding = i.has_violation;
+
+          const matchQ = !q || String(i.id).includes(q) ||
             (i.driver_name && i.driver_name.toLowerCase().includes(q)) ||
             (i.plate_number && i.plate_number.toLowerCase().includes(q)) ||
             (i.violation_remarks && i.violation_remarks.toLowerCase().includes(q));
+
+          return matchDepot && matchFinding && matchQ;
         }).slice(0, 100);
 
         if (badge) badge.innerText = `${this.inspections.length.toLocaleString()} Records`;
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-slate-400">No inspection records logged.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="12" class="p-6 text-center text-slate-400">No inspection records match current criteria.</td></tr>`;
           return;
         }
 
@@ -2009,12 +2402,13 @@ service cloud.firestore {
           const hasAck = !!i.signature_data_url || !!i.acknowledgement_photo_url;
           const ackType = i.acknowledgement_photo_url ? 'photo' : (i.signature_data_url ? 'signature' : 'none');
 
-          const timeStr = i.completion_time ? String(i.completion_time).substring(0, 16).replace('T', ' ') : '-';
-
           return `
             <tr class="hover:bg-slate-50">
               <td class="p-3 font-mono font-bold text-slate-700">#${i.id}</td>
-              <td class="p-3 text-slate-500 whitespace-nowrap">${timeStr}</td>
+              <td class="p-3 text-slate-500 whitespace-nowrap">
+                <span class="block font-bold text-slate-800">${i.date || '-'}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${i.week_number || ''}</span>
+              </td>
               <td class="p-3 font-semibold text-slate-800">${i.qc_initials || i.qc_name}</td>
               <td class="p-3 font-bold text-slate-900">${i.driver_name}</td>
               <td class="p-3 font-mono text-slate-600">${i.matched_sap_id || '-'}</td>
@@ -2042,6 +2436,11 @@ service cloud.firestore {
                 </div>
               </td>
               <td class="p-3 text-slate-600 max-w-xs truncate" title="${i.violation_remarks || 'None'}">${i.violation_remarks || '-'}</td>
+              <td class="p-3 text-center">
+                <button type="button" onclick="portal.deleteInspection('${i.id}')" title="Delete record" class="text-rose-500 hover:text-rose-700 p-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </td>
             </tr>
           `;
         }).join('');
@@ -2054,7 +2453,6 @@ service cloud.firestore {
         document.getElementById('ackModalTitle').innerText = `Audit #${item.id} Proof Record`;
         document.getElementById('ackModalSub').innerText = `${item.driver_name} • Unit: ${item.plate_number} • Depot: ${item.depot_code}`;
 
-        // Acknowledgement Media (Signature or Physical Slip Photo)
         const ackMedia = item.acknowledgement_photo_url || item.signature_data_url;
         const ackWrap = document.getElementById('ackModalAckProofWrap');
         const ackImg = document.getElementById('ackModalImg');
@@ -2066,7 +2464,6 @@ service cloud.firestore {
           ackWrap.classList.add('hidden');
         }
 
-        // Inspection Condition Photo
         const auditPhotoWrap = document.getElementById('ackModalAuditPhotoWrap');
         const auditImg = document.getElementById('ackModalAuditImg');
 
@@ -2090,7 +2487,7 @@ service cloud.firestore {
         const timeDisplay = item.completion_time ? String(item.completion_time).replace('T', ' ').substring(0, 19) : '-';
         details.innerHTML = `
           <div><strong>QC Inspector:</strong> ${item.qc_name} (${item.qc_initials})</div>
-          <div><strong>Timestamp:</strong> ${timeDisplay}</div>
+          <div><strong>Timestamp:</strong> ${timeDisplay} • Op Date: ${item.date || '-'} (${item.week_number || '-'})</div>
           <div><strong>Compliance Finding:</strong> <span class="font-bold ${item.has_violation ? 'text-rose-600' : 'text-emerald-700'}">${item.has_violation ? 'With Violation/s' : 'Clean Inspection'}</span></div>
           ${item.violation_remarks ? `<div class="pt-1"><strong>Citations:</strong> <p class="mt-0.5 text-rose-800 bg-rose-50 p-2 rounded-lg border border-rose-200 font-mono text-[11px] leading-relaxed">${item.violation_remarks}</p></div>` : ''}
         `;
@@ -2104,6 +2501,26 @@ service cloud.firestore {
         const modal = document.getElementById('acknowledgementModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+      }
+
+      openLightbox(src, caption = 'Photo Evidence') {
+        const img = document.getElementById('lightboxImage');
+        const cap = document.getElementById('lightboxCaption');
+        const modal = document.getElementById('lightboxModal');
+        if (img) img.src = src;
+        if (cap) cap.innerText = caption;
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      }
+
+      closeLightbox() {
+        const modal = document.getElementById('lightboxModal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
       }
 
       openCloudDiagnosticModal() {
@@ -2137,7 +2554,19 @@ service cloud.firestore {
           const data = await file.arrayBuffer();
           const wb = XLSX.read(data, { type: 'array' });
           const sheet = wb.Sheets[wb.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+          
+          // Smart Header Detection: check first 10 rows for SAP ID / Name headers
+          let headerRowIndex = 0;
+          const rawSheetArray = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          for (let r = 0; r < Math.min(10, rawSheetArray.length); r++) {
+            const rowStr = (rawSheetArray[r] || []).join(' ').toLowerCase();
+            if (rowStr.includes('sap') || rowStr.includes('driver') || rowStr.includes('plate')) {
+              headerRowIndex = r;
+              break;
+            }
+          }
+
+          const json = XLSX.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: '' });
 
           const parsed = [];
           for (const row of json) {
@@ -2191,7 +2620,7 @@ service cloud.firestore {
       async pushDriversToCloud(driversList) {
         if (!this.firestore) return;
         try {
-          const batchSize = 300;
+          const batchSize = 250;
           const totalBatches = Math.ceil(driversList.length / batchSize);
           for (let i = 0; i < totalBatches; i++) {
             const chunk = driversList.slice(i * batchSize, (i + 1) * batchSize);
@@ -2214,7 +2643,6 @@ service cloud.firestore {
           const data = await file.arrayBuffer();
           const wb = XLSX.read(data, { type: 'array', cellDates: true });
 
-          // Discover the appropriate worksheet with data rows
           let targetSheetName = wb.SheetNames.find(n => 
             n.toLowerCase().includes('response') || 
             n.toLowerCase().includes('form') || 
@@ -2223,19 +2651,19 @@ service cloud.firestore {
           ) || wb.SheetNames[0];
 
           let sheet = wb.Sheets[targetSheetName];
-          let json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-          if (!json || json.length === 0) {
-            for (const sName of wb.SheetNames) {
-              const testJson = XLSX.utils.sheet_to_json(wb.Sheets[sName], { defval: '' });
-              if (testJson && testJson.length > 0) {
-                targetSheetName = sName;
-                sheet = wb.Sheets[sName];
-                json = testJson;
-                break;
-              }
+          
+          // Detect header row offset
+          let headerRowIndex = 0;
+          const rawSheetArray = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          for (let r = 0; r < Math.min(10, rawSheetArray.length); r++) {
+            const rowStr = (rawSheetArray[r] || []).join(' ').toLowerCase();
+            if (rowStr.includes('plate') || rowStr.includes('driver') || rowStr.includes('finding') || rowStr.includes('time')) {
+              headerRowIndex = r;
+              break;
             }
           }
+
+          let json = XLSX.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: '' });
 
           if (!json || json.length === 0) {
             throw new Error(`Sheet "${targetSheetName}" is empty or has no recognizable data rows.`);
@@ -2248,7 +2676,6 @@ service cloud.firestore {
           for (let idx = 0; idx < json.length; idx++) {
             const row = json[idx];
 
-            // Ignore blank or padding rows
             const nonBlankValues = Object.values(row).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
             if (nonBlankValues.length === 0) continue;
 
@@ -2364,6 +2791,7 @@ service cloud.firestore {
         }
       }
 
+      // 50x faster batch write using Firestore Batches
       async pushLocalDataToCloud() {
         if (!this.firestore || !this.isCloudActive) {
           this.showToast('Cloud Offline', 'Connect to live cloud before broadcasting.', 'error');
@@ -2373,18 +2801,22 @@ service cloud.firestore {
         try {
           this.showToast('Broadcasting Data', 'Publishing inspections to shared cloud...', 'info');
 
-          // Batch push inspections
-          const batchSize = 100;
+          const batchSize = 400; // Firestore limit is 500 operations per batch
           const totalBatches = Math.ceil(this.inspections.length / batchSize);
 
-          for (let i = 0; i < Math.min(totalBatches, 20); i++) {
+          for (let i = 0; i < totalBatches; i++) {
+            const writeBatch = this.firestore.batch();
             const chunk = this.inspections.slice(i * batchSize, (i + 1) * batchSize);
-            for (const item of chunk) {
-              await this.firestore.collection('qc_inspections').doc(String(item.id)).set(item);
-            }
+
+            chunk.forEach(item => {
+              const docRef = this.firestore.collection('qc_inspections').doc(String(item.id));
+              writeBatch.set(docRef, item);
+            });
+
+            await writeBatch.commit();
           }
 
-          this.showToast('Broadcast Complete', 'Shared database synchronized nationwide.', 'success');
+          this.showToast('Broadcast Complete', `Synchronized ${this.inspections.length} audits nationwide.`, 'success');
         } catch (e) {
           console.error('Cloud broadcast error:', e);
           this.showToast('Sync Error', 'Error uploading records to cloud.', 'error');
@@ -2406,6 +2838,7 @@ service cloud.firestore {
           if (cloudList.length > 0) {
             this.inspections = cloudList;
             await dbPutBatch('inspections', cloudList);
+            this.populateOpWeekFilter();
             this.renderDashboard();
             this.renderWeeklyMatrix();
             this.renderInspectionLogsTable();
@@ -2418,6 +2851,99 @@ service cloud.firestore {
           console.error('Cloud pull error:', e);
           this.showToast('Pull Failed', 'Could not download cloud records.', 'error');
         }
+      }
+
+      // Generator for realistic GSM Fleet Demo Data
+      async loadDemoData() {
+        const demoDepots = ['CAN', 'LAS', 'STA', 'TAG', 'CEB1', 'SAS', 'RZL', 'ELS'];
+        const sampleFirst = ['Juan', 'Mark', 'Arnel', 'Danilo', 'Reynaldo', 'Christian', 'Michael', 'Eduardo', 'Joseph', 'Noel'];
+        const sampleLast = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Bautista', 'Flores', 'Villanueva', 'Ramos', 'Aquino'];
+        
+        const demoDrivers = [];
+        let sapStart = 50012000;
+
+        demoDepots.forEach((depot, dIdx) => {
+          const count = 25 + (dIdx * 4);
+          for (let i = 0; i < count; i++) {
+            const fn = sampleFirst[(i + dIdx) % sampleFirst.length];
+            const ln = sampleLast[(i * 2 + dIdx) % sampleLast.length];
+            sapStart++;
+            demoDrivers.push({
+              sap_id: sapStart,
+              full_name: `${fn} ${ln}`,
+              plate_number: `NGP ${1000 + (sapStart % 8999)}`,
+              depot_raw: depot,
+              depot_code: depot,
+              status: 'Active'
+            });
+          }
+        });
+
+        const qcs = [
+          { init: 'QC JB', name: 'John Bryan' },
+          { init: 'QC PM', name: 'Paul Michael' },
+          { init: 'QC GR', name: 'Gerald Rey' },
+          { init: 'QC AA', name: 'Alvin Allen' },
+          { init: 'QC RC', name: 'Raymund Carlo' }
+        ];
+
+        const demoAudits = [];
+        const now = new Date();
+        let auditId = 1001;
+
+        // Spread 85 inspections over current week
+        for (let i = 0; i < 85; i++) {
+          const driver = demoDrivers[i % demoDrivers.length];
+          const qc = qcs[i % qcs.length];
+          const hasViol = i % 5 === 0;
+          const dayOffset = (i % 7);
+          const auditTime = new Date(now.getTime() - (dayOffset * 24 * 3600 * 1000) - (i * 3600 * 1000));
+          
+          let remarks = '';
+          if (hasViol) {
+            const vSample = QCF_STANDARDS[i % QCF_STANDARDS.length];
+            remarks = `[${vSample.id}] ${vSample.name}; Needs correction`;
+          }
+
+          auditId++;
+          demoAudits.push({
+            id: auditId,
+            start_time: auditTime.toISOString(),
+            completion_time: auditTime.toISOString(),
+            date: this.getOperationalDateStr(auditTime),
+            week_number: this.getOperationalWeek(auditTime),
+            qc_initials: qc.init,
+            qc_name: qc.name,
+            depot_raw: driver.depot_code,
+            depot_code: driver.depot_code,
+            inspection_type: i % 3 === 0 ? 'Outside Depot (Road/Route)' : 'Inside Depot Inspection',
+            driver_name: driver.full_name,
+            matched_sap_id: driver.sap_id,
+            plate_number: driver.plate_number,
+            supervisor: 'Operations Supv',
+            has_violation: hasViol,
+            violation_remarks: remarks,
+            submitted_by_uid: 'demo-generator'
+          });
+        }
+
+        this.drivers = demoDrivers;
+        this.inspections = demoAudits;
+
+        await dbClear('drivers');
+        await dbClear('inspections');
+        await dbPutBatch('drivers', demoDrivers);
+        await dbPutBatch('inspections', demoAudits);
+
+        this.populateOpWeekFilter();
+        this.renderDashboard();
+        this.renderWeeklyMatrix();
+        this.renderDriverRegistryTable();
+        this.renderInspectionLogsTable();
+        this.updateDataCenterCounters();
+
+        this.showToast('Demo Data Loaded', `Generated ${demoDrivers.length} drivers & ${demoAudits.length} inspections.`, 'success');
+        this.switchTab('dashboard');
       }
 
       updateDataCenterCounters() {
@@ -2513,6 +3039,7 @@ service cloud.firestore {
         await dbClear('inspections');
         this.drivers = [];
         this.inspections = [];
+        this.populateOpWeekFilter();
         this.renderDashboard();
         this.renderWeeklyMatrix();
         this.renderDriverRegistryTable();
@@ -2524,7 +3051,6 @@ service cloud.firestore {
       switchTab(tabId) {
         this.activeTab = tabId;
 
-        // Hide all views
         ['dashboard', 'inspection', 'matrix', 'registry', 'logs', 'datacenter'].forEach(t => {
           const view = document.getElementById(`tab-${t}-view`);
           const nav = document.getElementById(`nav-${t}`);
@@ -2540,7 +3066,6 @@ service cloud.firestore {
           }
         });
 
-        // Show active view
         const targetView = document.getElementById(`tab-${tabId}-view`);
         const targetNav = document.getElementById(`nav-${tabId}`);
         const targetMobNav = document.getElementById(`mobile-nav-${tabId}`);
@@ -2555,7 +3080,11 @@ service cloud.firestore {
         }
 
         if (tabId === 'inspection') {
-          setTimeout(() => this.setupSignatureCanvas(), 100);
+          setTimeout(() => this.resizeSignatureCanvas(true), 120);
+        } else if (tabId === 'dashboard') {
+          setTimeout(() => {
+            this.renderDashboard();
+          }, 50);
         }
       }
 
