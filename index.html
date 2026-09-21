@@ -595,46 +595,76 @@
           </div>
 
           <!-- Zone 2: Historical QC Inspections File -->
-          <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition relative">
-            <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 shadow-inner">
-              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-            <h3 class="font-bold text-sm text-slate-900">QC Inspection Workbook</h3>
-            <p class="text-[11px] text-slate-500 mt-1 mb-4">Upload <code class="bg-slate-200 px-1 py-0.5 rounded font-bold">QC Inspection Form...xlsx</code> (Response sheet)</p>
-            <label class="cursor-pointer px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-700/20 transition">
-              Select QC Inspections.xlsx
-              <input type="file" accept=".xlsx, .xls, .csv" onchange="portal.handleInspectionsUpload(event)" class="hidden" />
-            </label>
-            <div id="uploadInspectionsStatus" class="text-xs text-slate-500 mt-3 font-medium">Ready for upload.</div>
+        <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition relative">
+          <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 shadow-inner">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           </div>
+          <h3 class="font-bold text-sm text-slate-900">QC Inspection Workbook</h3>
+          <p class="text-[11px] text-slate-500 mt-1 mb-4">Upload <code class="bg-slate-200 px-1 py-0.5 rounded font-bold">QC Inspection Form...xlsx</code> (Response sheet)</p>
+          <label class="cursor-pointer px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-700/20 transition">
+            Select QC Inspections.xlsx
+            <input type="file" accept=".xlsx, .xls, .csv" onchange="portal.handleInspectionsUpload(event)" class="hidden" />
+          </label>
+          <div id="uploadInspectionsStatus" class="text-xs text-slate-500 mt-3 font-medium">Ready for upload.</div>
         </div>
+      </div>
 
-        <!-- Processing Progress Bar -->
-        <div id="uploadProgressBarContainer" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-          <div class="flex justify-between text-xs font-bold text-slate-700">
-            <span id="uploadProgressText">Processing records...</span>
-            <span id="uploadProgressPct">0%</span>
-          </div>
-          <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-            <div id="uploadProgressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-150" style="width: 0%"></div>
-          </div>
-        </div>
-
-        <!-- Database Storage Management -->
-        <div class="border-t pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <h4 class="text-xs font-bold uppercase text-slate-700">IndexedDB & Cloud Sync Health</h4>
-            <p id="storageFootprintText" class="text-[11px] text-slate-500">Database: <code>QC_Master_Fleet_DB</code></p>
-          </div>
+      <!-- Cloud & Local Storage Status Banner -->
+      <div class="p-4 rounded-2xl bg-emerald-950 text-white border border-emerald-800 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-800/80 pb-3">
           <div class="flex items-center gap-2">
-            <button onclick="portal.forceCloudRefresh()" class="px-3.5 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-xl transition flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              Force Cloud Pull
-            </button>
-            <button onclick="portal.promptClearDatabase()" class="px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold rounded-xl transition">
-              Clear Local Cache
-            </button>
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-200">Mobile & Desktop Sync Status</h4>
           </div>
+          <span class="text-[11px] text-emerald-300 font-mono" id="syncStatusSummary">Checking local cache...</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-800 flex justify-between items-center">
+            <div>
+              <span class="text-slate-300 block text-[10px] uppercase font-bold">Roster Master (drivers.xlsx)</span>
+              <span id="syncRosterCount" class="font-extrabold text-base text-white">0 Drivers</span>
+            </div>
+            <span id="syncRosterBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-800 text-emerald-200">Checking</span>
+          </div>
+          <div class="bg-emerald-900/60 p-3 rounded-xl border border-emerald-800 flex justify-between items-center">
+            <div>
+              <span class="text-slate-300 block text-[10px] uppercase font-bold">QC Audits (QC Inspection Form.xlsx)</span>
+              <span id="syncInspectionCount" class="font-extrabold text-base text-white">0 Audits</span>
+            </div>
+            <span id="syncInspectionBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-800 text-amber-200">Needs Sync</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Progress Bar -->
+      <div id="uploadProgressBarContainer" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+        <div class="flex justify-between text-xs font-bold text-slate-700">
+          <span id="uploadProgressText">Processing records...</span>
+          <span id="uploadProgressPct">0%</span>
+        </div>
+        <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+          <div id="uploadProgressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-150" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Database Storage Management -->
+      <div class="border-t pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h4 class="text-xs font-bold uppercase text-slate-700">IndexedDB & Cloud Sync Health</h4>
+          <p id="storageFootprintText" class="text-[11px] text-slate-500">Database: <code>QC_Master_Fleet_DB</code></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="portal.pushLocalDataToCloud()" id="btnPushCloud" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <span>🚀 Push Stored Data to Cloud</span>
+          </button>
+          <button onclick="portal.forceCloudRefresh()" class="px-3.5 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-xl transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Force Cloud Pull
+          </button>
+          <button onclick="portal.promptClearDatabase()" class="px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold rounded-xl transition">
+            Clear Local Cache
+          </button>
         </div>
       </div>
     </section>
@@ -676,28 +706,6 @@
     let auth = null;
     let cloudUser = null;
     let cloudSyncActive = false;
-
-    // Helper functions to target direct root collections or subcollection paths cleanly
-    const getInspCollection = (firestore) => {
-      return typeof __app_id !== 'undefined'
-        ? collection(firestore, 'artifacts', appId, 'public', 'data', 'inspections')
-        : collection(firestore, 'qc_inspections');
-    };
-    const getRosterCollection = (firestore) => {
-      return typeof __app_id !== 'undefined'
-        ? collection(firestore, 'artifacts', appId, 'public', 'data', 'roster_batches')
-        : collection(firestore, 'qc_roster_batches');
-    };
-    const getInspDocRef = (firestore, id) => {
-      return typeof __app_id !== 'undefined'
-        ? doc(firestore, 'artifacts', appId, 'public', 'data', 'inspections', String(id))
-        : doc(firestore, 'qc_inspections', String(id));
-    };
-    const getRosterDocRef = (firestore, batchKey) => {
-      return typeof __app_id !== 'undefined'
-        ? doc(firestore, 'artifacts', appId, 'public', 'data', 'roster_batches', batchKey)
-        : doc(firestore, 'qc_roster_batches', batchKey);
-    };
 
     const DEPOT_CODES = ['CAN', 'LAS', 'STA', 'TAG', 'RZL', 'CEB1', 'SAS', 'ELS'];
 
@@ -831,6 +839,75 @@
         req.onsuccess = () => resolve(req.result || []);
         req.onerror = (e) => reject(e.target.error);
       });
+    }
+
+    // Case-insensitive, punctuation-resilient field extractor
+    function extractRowField(row, aliasPatterns, defaultVal = '') {
+      if (!row || typeof row !== 'object') return defaultVal;
+      const rowKeys = Object.keys(row);
+      for (const pattern of aliasPatterns) {
+        // Direct property check
+        if (row[pattern] !== undefined && row[pattern] !== null && String(row[pattern]).trim() !== '') {
+          return row[pattern];
+        }
+        // Normalized alphanumeric check
+        const cleanPattern = String(pattern).toLowerCase().replace(/[^a-z0-9]/g, '');
+        for (const key of rowKeys) {
+          const cleanKey = String(key).toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (cleanKey === cleanPattern && row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== '') {
+            return row[key];
+          }
+        }
+      }
+      return defaultVal;
+    }
+
+    // Flexible date parser supporting Excel serial numbers, ISO strings, and standard dates
+    function parseFlexibleDate(rawDate) {
+      if (!rawDate) return new Date();
+      if (rawDate instanceof Date && !isNaN(rawDate.getTime())) return rawDate;
+      if (typeof rawDate === 'number') {
+        return new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+      }
+      const parsed = new Date(rawDate);
+      if (!isNaN(parsed.getTime())) return parsed;
+      return new Date();
+    }
+
+    // Intelligent sheet finder prioritizing sheets with records
+    function findBestSheet(workbook, isInspection = true) {
+      if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) return null;
+      if (workbook.SheetNames.length === 1) {
+        return workbook.Sheets[workbook.SheetNames[0]];
+      }
+
+      const keywords = isInspection
+        ? ['response', 'form', 'inspection', 'audit', 'qc', 'sheet1']
+        : ['driver', 'master', 'roster', 'active', 'fleet', 'sheet1'];
+
+      for (const sheetName of workbook.SheetNames) {
+        const lower = sheetName.toLowerCase();
+        for (const kw of keywords) {
+          if (lower.includes(kw)) {
+            const sheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            if (data && data.length > 1) return sheet;
+          }
+        }
+      }
+
+      // Fallback: pick the sheet with the most rows
+      let bestSheet = workbook.Sheets[workbook.SheetNames[0]];
+      let maxRows = 0;
+      for (const sheetName of workbook.SheetNames) {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (rows && rows.length > maxRows) {
+          maxRows = rows.length;
+          bestSheet = sheet;
+        }
+      }
+      return bestSheet;
     }
 
     class SmartDriverMatcher {
@@ -1022,126 +1099,98 @@
           auth = getAuth(app);
           db = getFirestore(app);
 
-          // 1. Establish persistent Inspector Device UID (ensures offline and fallback continuity)
-          let deviceId = localStorage.getItem('qc_inspector_device_uid');
-          if (!deviceId) {
-            deviceId = 'QC-' + Math.random().toString(36).substring(2, 7).toUpperCase();
-            localStorage.setItem('qc_inspector_device_uid', deviceId);
-          }
-
-          // 2. Attempt Authentication with a 3.5s timeout (does not block Firestore if Auth is disabled)
           const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-          try {
-            const authPromise = token ? signInWithCustomToken(auth, token) : signInAnonymously(auth);
-            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), 3500));
-            const userCred = await Promise.race([authPromise, timeoutPromise]);
-            cloudUser = userCred.user;
-          } catch (authErr) {
-            console.warn('Anonymous auth bypassed (using Device UID fallback):', authErr.message || authErr.code);
-            cloudUser = { uid: deviceId, isFallback: true };
+          let userCred;
+          if (token) {
+            userCred = await signInWithCustomToken(auth, token);
+          } else {
+            userCred = await signInAnonymously(auth);
           }
 
-          if (uidEl) uidEl.innerText = cloudUser.uid;
-
-          // 3. Test Firestore Read & Write capability directly
-          const pingDocRef = doc(db, 'qc_system', 'health');
-          await setDoc(pingDocRef, { ping: Date.now(), deviceId: cloudUser.uid }, { merge: true });
-
-          // If write succeeded, Firestore is fully unlocked and ready!
+          cloudUser = userCred.user;
           cloudSyncActive = true;
+
           dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
           txt.innerText = 'Live Cloud Active';
+          if (uidEl) uidEl.innerText = cloudUser.uid;
 
           this.bindRealtimeListeners();
           this.showToast('Cloud Connected', `Sync active as Inspector UID: ${cloudUser.uid}`, 'success');
         } catch (err) {
-          console.warn('Cloud connection check result:', err);
-          cloudSyncActive = false;
-
-          if (err.code === 'permission-denied') {
-            dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
-            txt.innerText = 'Rules Locked (Tap to Fix)';
-            this.showToast('Firestore Rules Locked', 'Database rules are currently set to false. Tap status pill to copy the fix.', 'error');
-          } else {
-            dot.className = 'w-2 h-2 rounded-full bg-amber-400';
-            txt.innerText = 'Cloud Warning (Tap to Fix)';
-            this.showToast('Cloud Notice', err.message || 'Check connection', 'info');
-          }
+          console.warn('Cloud initialization fallback:', err);
+          dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          txt.innerText = 'Cloud Warning (Tap to check)';
           if (uidEl) uidEl.innerText = 'offline-cached';
+          if (err.code === 'auth/operation-not-allowed') {
+            this.showToast('Enable Anonymous Sign-in', 'Go to Firebase Authentication -> Sign-in method and enable Anonymous.', 'error');
+          }
         }
       }
 
       openCloudConfigModal() {
+        const saved = localStorage.getItem('qc_custom_firebase_config') || (typeof __firebase_config !== 'undefined' ? __firebase_config : '');
+        const ta = document.getElementById('inputFirebaseConfigJson');
+        if (ta && saved) {
+          try {
+            const parsed = typeof saved === 'string' ? JSON.parse(saved) : saved;
+            ta.value = JSON.stringify(parsed, null, 2);
+          } catch(e) {
+            ta.value = saved;
+          }
+        }
         const modal = document.getElementById('cloudConfigModal');
-        if (!modal) return;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        this.runDiagnosticsUI();
       }
 
       closeCloudConfigModal() {
         const modal = document.getElementById('cloudConfigModal');
-        if (!modal) return;
         modal.classList.add('hidden');
         modal.classList.remove('flex');
       }
 
-      async testCloudConnectionNow() {
-        this.showToast('Testing...', 'Verifying Firestore permissions...', 'info');
-        await this.initializeCloudSync();
-        this.runDiagnosticsUI();
-      }
-
-      async runDiagnosticsUI() {
-        const stepConfig = document.getElementById('diagStepConfig');
-        const stepAuth = document.getElementById('diagStepAuth');
-        const stepFs = document.getElementById('diagStepFirestore');
-        const badge = document.getElementById('diagOverallBadge');
-        const solutionBox = document.getElementById('diagSolutionBox');
-
-        stepConfig.innerHTML = '✅ Project: <code>qc-operations-portal</code>';
-        
-        if (cloudUser) {
-          stepAuth.innerHTML = cloudUser.isFallback
-            ? `<span class="text-amber-600">⚡ Device UID (${cloudUser.uid})</span>`
-            : `<span class="text-emerald-600">✅ Authenticated (${cloudUser.uid.substring(0, 8)}...)</span>`;
-        } else {
-          stepAuth.innerHTML = '<span class="text-slate-400">Waiting</span>';
+      async saveCloudConfig() {
+        const ta = document.getElementById('inputFirebaseConfigJson');
+        const raw = ta.value.trim();
+        if (!raw) {
+          this.showToast('Configuration Required', 'Please paste your Firebase configuration JSON.', 'error');
+          return;
         }
 
-        if (cloudSyncActive) {
-          stepFs.innerHTML = '<span class="text-emerald-600 font-bold">✅ Read & Write Allowed</span>';
-          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
-          badge.innerText = '🟢 Connected';
-          if (solutionBox) solutionBox.classList.add('hidden');
-        } else {
-          stepFs.innerHTML = '<span class="text-rose-600 font-bold">❌ Permission Denied / Locked</span>';
-          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800';
-          badge.innerText = '🔴 Rules Locked';
-          if (solutionBox) solutionBox.classList.remove('hidden');
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed.projectId || !parsed.apiKey) {
+            throw new Error('Config missing required "projectId" or "apiKey".');
+          }
+          localStorage.setItem('qc_custom_firebase_config', JSON.stringify(parsed));
+          this.closeCloudConfigModal();
+          this.showToast('Config Saved', 'Connecting to live cloud...', 'info');
+          await this.initializeCloudSync();
+        } catch (e) {
+          this.showToast('Invalid JSON', 'Please verify your Firebase configuration format: ' + e.message, 'error');
         }
       }
 
-      copyFirestoreRules() {
-        const text = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
-        const tempTa = document.createElement('textarea');
-        tempTa.value = text;
-        document.body.appendChild(tempTa);
-        tempTa.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempTa);
-        this.showToast('Rules Copied!', 'Paste into Firebase > Firestore > Rules and click Publish.', 'success');
+      clearSavedCloudConfig() {
+        localStorage.removeItem('qc_custom_firebase_config');
+        this.closeCloudConfigModal();
+        this.showToast('Disconnected', 'Switched to local-only mode.', 'info');
+        const dot = document.getElementById('cloudSyncDot');
+        const txt = document.getElementById('cloudSyncText');
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        txt.innerText = 'Local Mode (Tap to Connect)';
       }
 
+      /* RULE 1 & RULE 2 & RULE 3: Strict public path, no compound queries, auth guarded, error callbacks */
       bindRealtimeListeners() {
-        if (!db) return;
+        if (!cloudUser || !db) return;
 
         // Clean up prior listeners if any
         this.cloudUnsubs.forEach(unsub => unsub && unsub());
         this.cloudUnsubs = [];
 
         // 1. Real-Time Listener: Inspections (Shared across all QCs)
-        const inspColl = getInspCollection(db);
+        const inspColl = collection(db, 'artifacts', appId, 'public', 'data', 'inspections');
         const unsubInsp = onSnapshot(
           inspColl,
           async (snapshot) => {
@@ -1171,7 +1220,7 @@
         this.cloudUnsubs.push(unsubInsp);
 
         // 2. Real-Time Listener: Driver Roster Batches (Shared nationwide roster)
-        const rosterColl = getRosterCollection(db);
+        const rosterColl = collection(db, 'artifacts', appId, 'public', 'data', 'roster_batches');
         const unsubRoster = onSnapshot(
           rosterColl,
           async (snapshot) => {
@@ -1194,6 +1243,7 @@
                 await dbPutBatch('drivers', this.drivers);
 
                 this.updateDatabasePill();
+                this.updateSyncMonitor();
                 this.renderCurrentView();
               }
             }
@@ -1203,6 +1253,44 @@
           }
         );
         this.cloudUnsubs.push(unsubRoster);
+
+        // 3. Real-Time Listener: Historical Inspection Batches (Syncs past audits to mobile)
+        const batchesColl = collection(db, 'artifacts', appId, 'public', 'data', 'inspection_batches');
+        const unsubBatches = onSnapshot(
+          batchesColl,
+          async (snapshot) => {
+            if (!snapshot.empty) {
+              const allBatchedInspections = [];
+              snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data && Array.isArray(data.records)) {
+                  allBatchedInspections.push(...data.records);
+                }
+              });
+
+              if (allBatchedInspections.length > 0) {
+                const inspMap = new Map();
+                this.inspections.forEach(i => inspMap.set(Number(i.id), i));
+                allBatchedInspections.forEach(i => inspMap.set(Number(i.id), i));
+
+                this.inspections = Array.from(inspMap.values()).sort((a, b) => Number(b.id) - Number(a.id));
+                await dbPutBatch('inspections', this.inspections);
+
+                document.getElementById('dashboardEmptyState')?.classList.add('hidden');
+                document.getElementById('dashboardDataContent')?.classList.remove('hidden');
+
+                this.updateDatabasePill();
+                this.updateSyncMonitor();
+                this.populateWeekDropdown();
+                this.renderCurrentView();
+              }
+            }
+          },
+          (error) => {
+            console.warn('Batched inspections cloud listener warning:', error);
+          }
+        );
+        this.cloudUnsubs.push(unsubBatches);
       }
 
       renderCurrentView() {
@@ -1235,11 +1323,12 @@
 
         this.matcher.indexDrivers(this.drivers);
         this.updateDatabasePill();
+        this.updateSyncMonitor();
 
         if (this.drivers.length === 0 && this.inspections.length === 0) {
           document.getElementById('dashboardEmptyState').classList.remove('hidden');
           document.getElementById('dashboardDataContent').classList.add('hidden');
-          this.setBannerNotice(true, 'No operational data loaded. Upload <code>drivers.xlsx</code> and <code>QC Inspection Form.xlsx</code> or wait for cloud sync.');
+          this.setBannerNotice(true, 'No operational data loaded. Upload <code>drivers.xlsx</code> and <code>QC Inspection Form.xlsx</code> or tap Force Cloud Pull.');
         } else {
           document.getElementById('dashboardEmptyState').classList.add('hidden');
           document.getElementById('dashboardDataContent').classList.remove('hidden');
@@ -1269,6 +1358,45 @@
           dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
           const activeCount = this.drivers.filter(d => d.status === 'Active').length;
           txt.innerText = `${activeCount.toLocaleString()} Active | ${this.inspections.length.toLocaleString()} Audits`;
+        }
+      }
+
+      updateSyncMonitor() {
+        const summary = document.getElementById('syncStatusSummary');
+        const rosterCount = document.getElementById('syncRosterCount');
+        const rosterBadge = document.getElementById('syncRosterBadge');
+        const inspCount = document.getElementById('syncInspectionCount');
+        const inspBadge = document.getElementById('syncInspectionBadge');
+
+        if (rosterCount) rosterCount.innerText = `${this.drivers.length.toLocaleString()} Drivers`;
+        if (inspCount) inspCount.innerText = `${this.inspections.length.toLocaleString()} Audits`;
+
+        if (this.drivers.length > 0) {
+          if (rosterBadge) {
+            rosterBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-800 text-emerald-200';
+            rosterBadge.innerText = 'Synchronized';
+          }
+        } else {
+          if (rosterBadge) {
+            rosterBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-800 text-amber-200';
+            rosterBadge.innerText = 'Missing Roster';
+          }
+        }
+
+        if (this.inspections.length > 0) {
+          if (inspBadge) {
+            inspBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-800 text-emerald-200';
+            inspBadge.innerText = 'Synchronized';
+          }
+        } else {
+          if (inspBadge) {
+            inspBadge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-800 text-rose-200';
+            inspBadge.innerText = '0 Audits (Upload or Pull)';
+          }
+        }
+
+        if (summary) {
+          summary.innerText = cloudSyncActive ? 'Cloud Live (Synced)' : 'Offline Local Storage';
         }
       }
 
@@ -2024,9 +2152,9 @@
         await dbPutBatch('inspections', [newRecord]);
 
         // 2. Publish to Cloud Firestore for other QCs to receive in real-time
-        if (db) {
+        if (cloudUser && db) {
           try {
-            const inspDocRef = getInspDocRef(db, nextId);
+            const inspDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'inspections', String(nextId));
             await setDoc(inspDocRef, newRecord);
           } catch (cloudErr) {
             console.warn('Real-time sync queued in offline cache:', cloudErr);
@@ -2393,7 +2521,7 @@
             this.showProgress(true, 'Parsing driver workbook...', 40);
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const sheet = findBestSheet(workbook, false);
             const rows = XLSX.utils.sheet_to_json(sheet);
 
             if (!rows || rows.length === 0) {
@@ -2407,18 +2535,24 @@
             let activeCount = 0;
 
             rows.forEach((r, idx) => {
-              if (r['SAP ID'] !== undefined && r['SAP ID'] !== null) {
-                const status = String(r['Status'] || 'Active').trim();
+              const sapIdRaw = extractRowField(r, ['SAP ID', 'SAPID', 'SAP', 'Driver SAP', 'Driver ID'], null);
+              if (sapIdRaw !== undefined && sapIdRaw !== null && String(sapIdRaw).trim() !== '') {
+                const status = String(extractRowField(r, ['Status', 'Driver Status', 'Account status'], 'Active')).trim();
                 if (status.toLowerCase().includes('active')) activeCount++;
+
+                const fullName = String(extractRowField(r, ['Full name', 'FullName', 'Driver Name', 'Name'], '')).trim();
+                const plate = extractRowField(r, ['License plate', 'Plate', 'Plate Number', 'Vehicle Plate'], null);
+                const depot = String(extractRowField(r, ['Depot', 'Depot Hub', 'Location', 'Hub'], 'CAN')).trim();
+
                 driverList.push({
-                  sap_id: Number(r['SAP ID']) || (100000 + idx),
-                  full_name: String(r['Full name'] || '').trim(),
+                  sap_id: Number(sapIdRaw) || (100000 + idx),
+                  full_name: fullName,
                   status: status,
-                  account_status: String(r['Account status'] || 'Unlock').trim(),
-                  vehicle_model: r['Vehicle model'] ? String(r['Vehicle model']).trim() : null,
-                  license_plate: r['License plate'] ? String(r['License plate']).trim().toUpperCase() : null,
-                  province_city: String(r['Province/City'] || '').trim(),
-                  depot: String(r['Depot'] || 'CAN').trim()
+                  account_status: String(extractRowField(r, ['Account status', 'Account Status'], 'Unlock')).trim(),
+                  vehicle_model: extractRowField(r, ['Vehicle model', 'Model'], null),
+                  license_plate: plate ? String(plate).trim().toUpperCase() : null,
+                  province_city: String(extractRowField(r, ['Province/City', 'City', 'Province'], '')).trim(),
+                  depot: depot
                 });
               }
             });
@@ -2429,18 +2563,18 @@
             this.matcher.indexDrivers(this.drivers);
 
             // 2. Publish batches to cloud so all QC phones receive updated roster
-            if (db) {
+            if (cloudUser && db) {
               this.showProgress(true, 'Publishing updated roster across all QC devices...', 85);
               const chunkSize = 400;
               const totalChunks = Math.ceil(driverList.length / chunkSize);
               for (let c = 0; c < totalChunks; c++) {
                 const chunk = driverList.slice(c * chunkSize, (c + 1) * chunkSize);
-                const chunkRef = getRosterDocRef(db, `batch_${c}`);
+                const chunkRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster_batches', `batch_${c}`);
                 await setDoc(chunkRef, {
                   chunkIndex: c,
                   totalChunks: totalChunks,
                   updatedAt: new Date().toISOString(),
-                  uploadedBy: cloudUser ? cloudUser.uid : 'admin',
+                  uploadedBy: cloudUser.uid,
                   drivers: chunk
                 });
               }
@@ -2473,49 +2607,82 @@
 
         reader.onload = async (evt) => {
           try {
-            this.showProgress(true, 'Parsing inspection responses...', 30);
+            this.showProgress(true, 'Analyzing inspection sheets...', 25);
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-            const sheetName = workbook.SheetNames.includes('Response') ? 'Response' : workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const rows = XLSX.utils.sheet_to_json(sheet);
+            
+            // Intelligent sheet selection (finds Response, Form1, Sheet1, etc.)
+            const sheet = findBestSheet(workbook, true);
+            if (!sheet) {
+              throw new Error('Could not locate a valid data sheet in the uploaded workbook.');
+            }
 
-            this.showProgress(true, 'Correlating drivers and fixing legacy IDs...', 60);
+            const rows = XLSX.utils.sheet_to_json(sheet);
+            if (!rows || rows.length === 0) {
+              throw new Error('The selected inspection sheet is empty.');
+            }
+
+            this.showProgress(true, `Correlating ${rows.length.toLocaleString()} inspections with driver roster...`, 50);
             const records = [];
             const seenIds = new Set();
             let matchedCount = 0;
 
             for (let i = 0; i < rows.length; i++) {
               const row = rows[i];
-              let rawId = row['Id'];
-              if (rawId === undefined || rawId === null) continue;
+
+              // Case-insensitive ID extraction with sequential fallback
+              let rawId = extractRowField(row, ['ID', 'Id', 'id', 'Submission ID', 'Record ID', 'Index', 'No.', 'No'], null);
               if (rawId === 'v') rawId = 13432;
-              const cleanId = Number(rawId);
-              if (isNaN(cleanId) || seenIds.has(cleanId)) continue;
+              let cleanId = Number(rawId);
+              if (isNaN(cleanId) || cleanId === null || cleanId === undefined) {
+                cleanId = i + 1;
+              }
+              if (seenIds.has(cleanId)) {
+                cleanId = cleanId + (i * 10000);
+              }
               seenIds.add(cleanId);
 
-              let compDate = row['Completion time'] instanceof Date ? row['Completion time'] : new Date(row['Completion time'] || Date.now());
-              if (isNaN(compDate.getTime())) compDate = new Date();
+              // Flexible date extraction
+              const rawCompDate = extractRowField(row, ['Completion time', 'Completion Time', 'Completed Time', 'Time of completion', 'End time', 'Date', 'Timestamp', 'Start time']);
+              const compDate = parseFlexibleDate(rawCompDate);
+              const rawStartDate = extractRowField(row, ['Start time', 'Start Time', 'Start'], compDate.toISOString());
+              const startDate = parseFlexibleDate(rawStartDate);
 
               const opDateStr = this.getOperationalDateStr(compDate);
               const opWeekNum = this.getOperationalWeek(compDate);
-              const qcName = String(row['Name'] || '').trim();
-              const driverName = String(row["Driver's Name"] || '').trim();
-              const plate = String(row['Plate number:'] || '').trim().toUpperCase();
-              const depotRaw = String(row["Driver's Depot."] || '').trim();
-              const depotCode = DEPOT_RAW_TO_CODE[depotRaw] || 'OTHER';
-              const hasV = String(row['Driver with / without violation/s?'] || '').toLowerCase().includes('with violation');
 
+              // Inspector Name & Initials
+              const qcName = String(extractRowField(row, ['Name', 'Inspector Name', 'QC Name', 'QC Inspector', 'Inspector', 'Auditor'], '')).trim();
+              const qcEmail = String(extractRowField(row, ['Email', 'Inspector Email', 'Email Address'], '')).trim();
+
+              // Driver Name & Plate
+              const driverName = String(extractRowField(row, ["Driver's Name", "Driver's name", "Drivers Name", "Driver Name", "Driver", "Full Name", "Name of Driver"], '')).trim();
+              const plate = String(extractRowField(row, ['Plate number:', 'Plate number', 'Plate Number', 'Plate', 'Plate No.', 'Plate No', 'License Plate', 'Unit'], '')).trim().toUpperCase();
+
+              // Depot Resolution
+              const depotRaw = String(extractRowField(row, ["Driver's Depot.", "Driver's Depot", "Drivers Depot", "Depot", "Driver Depot", "Depot Hub", "Location"], '')).trim();
+              const depotCode = DEPOT_RAW_TO_CODE[depotRaw] || (DEPOT_CODES.includes(depotRaw.toUpperCase()) ? depotRaw.toUpperCase() : 'OTHER');
+
+              // Violation Determination (Ensuring 'Without violation' is clean)
+              const findingText = String(extractRowField(row, ['Driver with / without violation/s?', 'Driver with / without violation', 'Finding', 'Violation status', 'With Violation', 'Has Violation'], '')).toLowerCase();
+              const hasV = findingText.includes('with violation') && !findingText.includes('without');
+
+              // Remarks & Supervisor
+              const remarks = String(extractRowField(row, ['Violation (Others section for remarks)', 'Violation (Others)', 'Violation Remarks', 'Remarks', 'Violation', 'Others', 'Notes'], '')).trim();
+              const supervisor = String(extractRowField(row, ["Driver's Operations Supervisor (OS)", "Driver's Supervisor", "Operations Supervisor", "Supervisor", "OS"], '')).trim();
+              const inspType = String(extractRowField(row, ['Depot Inspection / Outside Inspection', 'Inspection Type', 'Type of Inspection', 'Type', 'Location Type'], 'Depot (Inside Depot)')).trim();
+
+              // Correlate with active Driver Roster
               const matchResult = this.matcher.correlateInspection(driverName, plate, depotCode);
               if (matchResult.driver) matchedCount++;
 
               records.push({
                 id: cleanId,
-                start_time: row['Start time'] ? String(row['Start time']) : compDate.toISOString(),
+                start_time: startDate.toISOString(),
                 completion_time: compDate.toISOString(),
                 date: opDateStr,
                 week_number: opWeekNum,
-                qc_email: String(row['Email'] || '').trim(),
+                qc_email: qcEmail,
                 qc_name: qcName,
                 qc_initials: INSPECTOR_INITIALS_MAP[qcName] || 'QC',
                 driver_name: driverName,
@@ -2523,55 +2690,188 @@
                 plate_number: plate,
                 depot_raw: depotRaw,
                 depot_code: depotCode,
-                supervisor: row["Driver's Operations Supervisor (OS)"] ? String(row["Driver's Operations Supervisor (OS)"]).trim() : '',
-                inspection_type: String(row['Depot Inspection / Outside Inspection'] || 'Depot (Inside Depot)').trim(),
+                supervisor: supervisor,
+                inspection_type: inspType,
                 has_violation: hasV,
-                violation_remarks: row['Violation (Others section for remarks)'] ? String(row['Violation (Others section for remarks)']).trim() : '',
+                violation_remarks: remarks,
                 submitted_by_uid: cloudUser ? cloudUser.uid : 'bulk-upload'
               });
             }
 
-            this.showProgress(true, 'Saving correlated records to IndexedDB...', 85);
+            this.showProgress(true, `Saving ${records.length.toLocaleString()} inspections to IndexedDB...`, 80);
             await dbPutBatch('inspections', records);
             this.inspections = await dbGetAll('inspections');
 
+            if (cloudUser && db) {
+              this.showProgress(true, 'Broadcasting inspection history across mobile devices...', 90);
+              const chunkSize = 400;
+              const totalChunks = Math.ceil(records.length / chunkSize);
+              for (let c = 0; c < totalChunks; c++) {
+                const chunk = records.slice(c * chunkSize, (c + 1) * chunkSize);
+                const chunkRef = doc(db, 'artifacts', appId, 'public', 'data', 'inspection_batches', `batch_${c}`);
+                await setDoc(chunkRef, {
+                  chunkIndex: c,
+                  totalChunks: totalChunks,
+                  updatedAt: new Date().toISOString(),
+                  uploadedBy: cloudUser.uid,
+                  records: chunk
+                });
+              }
+            }
+
             this.showProgress(false);
             const matchPct = records.length > 0 ? ((matchedCount / records.length) * 100).toFixed(1) : 0;
-            document.getElementById('uploadInspectionsStatus').innerHTML = `✅ Ingested <strong>${records.length.toLocaleString()}</strong> audits. Smart matched <strong>${matchedCount.toLocaleString()} (${matchPct}%)</strong> to SAP IDs.`;
-            this.showToast('Inspections Ingested', `${records.length.toLocaleString()} records correlated locally and prepared for cloud distribution.`, 'success');
+            document.getElementById('uploadInspectionsStatus').innerHTML = `✅ Ingested <strong>${records.length.toLocaleString()}</strong> audits. Smart matched <strong>${matchedCount.toLocaleString()} (${matchPct}%)</strong> to SAP IDs. Synced to Cloud.`;
+            this.showToast('Inspections Ingested', `${records.length.toLocaleString()} audits saved locally and broadcasted to cloud.`, 'success');
 
             await this.loadLocalCache();
           } catch (err) {
             this.showProgress(false);
+            console.error('Inspection parse failure:', err);
             this.showToast('Parse Failed', err.message, 'error');
           }
         };
         reader.readAsArrayBuffer(file);
       }
 
+      async pushLocalDataToCloud() {
+        if (!cloudUser || !db) {
+          this.showToast('Cloud Offline', 'Connect to Firebase before syncing to cloud.', 'error');
+          return;
+        }
+
+        if (this.drivers.length === 0 && this.inspections.length === 0) {
+          this.showToast('No Data', 'Please upload drivers.xlsx or QC Inspection Form first.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('btnPushCloud');
+        if (btn) btn.disabled = true;
+
+        try {
+          this.showProgress(true, 'Publishing driver roster to cloud...', 10);
+
+          // 1. Push Driver Roster Batches
+          if (this.drivers.length > 0) {
+            const chunkSize = 400;
+            const totalChunks = Math.ceil(this.drivers.length / chunkSize);
+            for (let c = 0; c < totalChunks; c++) {
+              const chunk = this.drivers.slice(c * chunkSize, (c + 1) * chunkSize);
+              const chunkRef = doc(db, 'artifacts', appId, 'public', 'data', 'roster_batches', `batch_${c}`);
+              await setDoc(chunkRef, {
+                chunkIndex: c,
+                totalChunks: totalChunks,
+                updatedAt: new Date().toISOString(),
+                uploadedBy: cloudUser.uid,
+                drivers: chunk
+              });
+              const pct = Math.round(10 + ((c + 1) / totalChunks) * 40);
+              this.showProgress(true, `Uploading drivers batch ${c + 1}/${totalChunks}...`, pct);
+            }
+          }
+
+          // 2. Push Inspection History Batches
+          if (this.inspections.length > 0) {
+            this.showProgress(true, 'Publishing inspection history to cloud...', 55);
+            const chunkSize = 400;
+            const totalChunks = Math.ceil(this.inspections.length / chunkSize);
+            for (let c = 0; c < totalChunks; c++) {
+              const chunk = this.inspections.slice(c * chunkSize, (c + 1) * chunkSize);
+              const chunkRef = doc(db, 'artifacts', appId, 'public', 'data', 'inspection_batches', `batch_${c}`);
+              await setDoc(chunkRef, {
+                chunkIndex: c,
+                totalChunks: totalChunks,
+                updatedAt: new Date().toISOString(),
+                uploadedBy: cloudUser.uid,
+                records: chunk
+              });
+              const pct = Math.round(55 + ((c + 1) / totalChunks) * 40);
+              this.showProgress(true, `Uploading inspections batch ${c + 1}/${totalChunks}...`, pct);
+            }
+          }
+
+          this.showProgress(false);
+          this.updateSyncMonitor();
+          this.showToast('Cloud Broadcast Complete', `Successfully published ${this.drivers.length.toLocaleString()} drivers and ${this.inspections.length.toLocaleString()} inspections to all devices!`, 'success');
+        } catch (err) {
+          this.showProgress(false);
+          this.showToast('Sync Failed', err.message, 'error');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
       async forceCloudRefresh() {
-        if (!db) {
+        if (!cloudUser || !db) {
           this.showToast('Local Mode', 'Cloud configuration not active.', 'info');
           return;
         }
-        this.showToast('Refreshing', 'Querying central cloud database...', 'info');
-        try {
-          const inspSnap = await getDocs(getInspCollection(db));
-          const cloudList = [];
-          inspSnap.forEach(d => cloudList.push(d.data()));
+        this.showToast('Syncing Cloud', 'Pulling all roster and inspection batches...', 'info');
+        this.showProgress(true, 'Connecting to Cloud Firestore...', 10);
 
-          if (cloudList.length > 0) {
-            const map = new Map();
-            this.inspections.forEach(i => map.set(Number(i.id), i));
-            cloudList.forEach(c => map.set(Number(c.id), c));
-            this.inspections = Array.from(map.values()).sort((a, b) => Number(b.id) - Number(a.id));
+        try {
+          // 1. Pull Roster Batches
+          const rosterSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'roster_batches'));
+          const cloudDrivers = [];
+          rosterSnap.forEach(d => {
+            const data = d.data();
+            if (data && Array.isArray(data.drivers)) {
+              cloudDrivers.push(...data.drivers);
+            }
+          });
+
+          if (cloudDrivers.length > 0) {
+            const driverMap = new Map();
+            this.drivers.forEach(d => driverMap.set(Number(d.sap_id), d));
+            cloudDrivers.forEach(d => driverMap.set(Number(d.sap_id), d));
+            this.drivers = Array.from(driverMap.values());
+            this.matcher.indexDrivers(this.drivers);
+            await dbPutBatch('drivers', this.drivers);
+          }
+
+          this.showProgress(true, 'Fetching inspection batches from cloud...', 50);
+
+          // 2. Pull Historical Inspection Batches
+          const batchSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'inspection_batches'));
+          const cloudBatchedInspections = [];
+          batchSnap.forEach(d => {
+            const data = d.data();
+            if (data && Array.isArray(data.records)) {
+              cloudBatchedInspections.push(...data.records);
+            }
+          });
+
+          // 3. Pull Live Single Inspections (from field forms)
+          const singleSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'inspections'));
+          const cloudSingleInspections = [];
+          singleSnap.forEach(d => {
+            const item = d.data();
+            if (item && item.id) cloudSingleInspections.push(item);
+          });
+
+          const allCloudInspections = [...cloudBatchedInspections, ...cloudSingleInspections];
+          if (allCloudInspections.length > 0) {
+            const inspMap = new Map();
+            this.inspections.forEach(i => inspMap.set(Number(i.id), i));
+            allCloudInspections.forEach(i => inspMap.set(Number(i.id), i));
+            this.inspections = Array.from(inspMap.values()).sort((a, b) => Number(b.id) - Number(a.id));
             await dbPutBatch('inspections', this.inspections);
           }
 
+          this.showProgress(false);
+          this.updateDatabasePill();
+          this.updateSyncMonitor();
           this.populateWeekDropdown();
           this.renderCurrentView();
-          this.showToast('Sync Complete', `Loaded ${cloudList.length} shared audits from cloud.`, 'success');
+
+          this.showToast(
+            'Cloud Sync Complete', 
+            `Loaded ${this.drivers.length.toLocaleString()} drivers & ${this.inspections.length.toLocaleString()} inspections.`, 
+            'success'
+          );
         } catch (e) {
+          this.showProgress(false);
+          console.error('Cloud pull failure:', e);
           this.showToast('Sync Warning', e.message, 'error');
         }
       }
