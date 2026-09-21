@@ -913,15 +913,90 @@ service cloud.firestore {
 
     // Depot normalization lookup
     const DEPOT_LOOKUP = {
-      'DEPOT 1 - CALOOCAN': 'CAN', 'CAN': 'CAN', 'CALOOCAN': 'CAN',
-      'DEPOT 2 - LAS PINAS': 'LAS', 'LAS': 'LAS', 'LAS PINAS': 'LAS', 'LAS PIÑAS': 'LAS',
-      'DEPOT 3 - STA. ROSA': 'STA', 'STA': 'STA', 'STA. ROSA': 'STA', 'SANTA ROSA': 'STA',
-      'DEPOT 4 - TAGUIG': 'TAG', 'TAG': 'TAG', 'TAGUIG': 'TAG',
-      'CEBU DEPOT': 'CEB1', 'CEB1': 'CEB1', 'CEBU': 'CEB1',
-      'DAVAO DEPOT': 'SAS', 'SAS': 'SAS', 'DAVAO': 'SAS',
+      'DEPOT 1 - CALOOCAN': 'CAN', 'CAN': 'CAN', 'CALOOCAN': 'CAN', 'CAL': 'CAN', 'DEPOT 1': 'CAN',
+      'DEPOT 2 - LAS PINAS': 'LAS', 'LAS': 'LAS', 'LAS PINAS': 'LAS', 'LAS PIÑAS': 'LAS', 'DEPOT 2': 'LAS',
+      'DEPOT 3 - STA. ROSA': 'STA', 'STA': 'STA', 'STA. ROSA': 'STA', 'SANTA ROSA': 'STA', 'DEPOT 3': 'STA',
+      'DEPOT 4 - TAGUIG': 'TAG', 'TAG': 'TAG', 'TAGUIG': 'TAG', 'DEPOT 4': 'TAG',
+      'CEBU DEPOT': 'CEB1', 'CEB1': 'CEB1', 'CEBU': 'CEB1', 'CEB': 'CEB1',
+      'DAVAO DEPOT': 'SAS', 'SAS': 'SAS', 'DAVAO': 'SAS', 'DVO': 'SAS',
       'RIZAL DEPOT': 'RZL', 'RZL': 'RZL', 'RIZAL': 'RZL',
-      'ELS': 'ELS'
+      'ELS': 'ELS', 'EAST': 'ELS', 'EAST FLEET': 'ELS'
     };
+
+    function resolveDepotCode(raw) {
+      if (!raw) return 'CAN';
+      const clean = String(raw).trim().toUpperCase();
+      if (DEPOT_LOOKUP[clean]) return DEPOT_LOOKUP[clean];
+      for (const k in DEPOT_LOOKUP) {
+        if (clean.includes(k) || k.includes(clean)) {
+          return DEPOT_LOOKUP[k];
+        }
+      }
+      return 'CAN';
+    }
+
+    // Fuzzy column resolver that strips question numbering (e.g., "1. Driver Name", "2. Plate No.") and formatting
+    function fuzzyFindColumn(row, candidateKeys) {
+      if (!row || typeof row !== 'object') return undefined;
+
+      const normalizedRow = {};
+      for (const rawKey of Object.keys(row)) {
+        const cleanK = rawKey.toLowerCase().replace(/^[0-9]+[\.\)\s_-]*/, '').replace(/[^a-z0-9]/g, '');
+        normalizedRow[cleanK] = row[rawKey];
+      }
+
+      for (const candidate of candidateKeys) {
+        const cleanCand = candidate.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (normalizedRow[cleanCand] !== undefined && normalizedRow[cleanCand] !== null && String(normalizedRow[cleanCand]).trim() !== '') {
+          return normalizedRow[cleanCand];
+        }
+        for (const rKey in normalizedRow) {
+          if ((rKey.includes(cleanCand) || cleanCand.includes(rKey)) && normalizedRow[rKey] !== undefined && normalizedRow[rKey] !== null && String(normalizedRow[rKey]).trim() !== '') {
+            return normalizedRow[rKey];
+          }
+        }
+      }
+      return undefined;
+    }
+
+    // Universal date normalizer: handles Excel serial numbers, JS Date objects, ISO strings, and localized formats
+    function normalizeExcelDate(val) {
+      if (!val) return new Date();
+      if (val instanceof Date) {
+        return isNaN(val.getTime()) ? new Date() : val;
+      }
+      if (typeof val === 'number' || (!isNaN(Number(val)) && String(val).trim().length >= 4 && !String(val).includes('-') && !String(val).includes('/') && !String(val).includes(':'))) {
+        const num = Number(val);
+        if (num > 10000 && num < 100000) {
+          const utcDays = num - 25569;
+          const ms = Math.round(utcDays * 86400 * 1000);
+          const d = new Date(ms);
+          if (!isNaN(d.getTime())) return d;
+        }
+      }
+      const str = String(val).trim();
+      const direct = new Date(str);
+      if (!isNaN(direct.getTime())) return direct;
+
+      const parts = str.split(/[\/\-\s:]+/);
+      if (parts.length >= 3) {
+        const p0 = parseInt(parts[0], 10);
+        const p1 = parseInt(parts[1], 10);
+        const p2 = parseInt(parts[2], 10);
+        if (p2 > 2000) {
+          const month = p0 > 12 ? p1 - 1 : p0 - 1;
+          const day = p0 > 12 ? p0 : p1;
+          let hour = parseInt(parts[3] || '0', 10);
+          const min = parseInt(parts[4] || '0', 10);
+          const sec = parseInt(parts[5] || '0', 10);
+          if (str.toLowerCase().includes('pm') && hour < 12) hour += 12;
+          if (str.toLowerCase().includes('am') && hour === 12) hour = 0;
+          const customD = new Date(p2, month, day, hour, min, sec);
+          if (!isNaN(customD.getTime())) return customD;
+        }
+      }
+      return new Date();
+    }
 
     const DB_NAME = 'QCPortalDB';
     const DB_VERSION = 1;
@@ -1038,7 +1113,8 @@ service cloud.firestore {
       }
 
       getOperationalDate(dateInput) {
-        const d = dateInput ? new Date(dateInput) : new Date();
+        let d = normalizeExcelDate(dateInput);
+        if (isNaN(d.getTime())) d = new Date();
         // 6:00 AM daily cutoff: 00:00:00 - 05:59:59 rolls back by 6 hours
         return new Date(d.getTime() - (6 * 60 * 60 * 1000));
       }
@@ -1053,8 +1129,6 @@ service cloud.firestore {
 
       getOperationalWeek(dateInput) {
         const opD = this.getOperationalDate(dateInput);
-        // Saturday is day 6, Sunday 0, Monday 1, etc.
-        // Anchor Tuesday of the week for ISO week calculation
         const target = new Date(opD.valueOf());
         const dayNr = (opD.getDay() + 1) % 7; // Sat=0, Sun=1, ..., Fri=6
         target.setDate(target.getDate() - dayNr + 3); // Align to mid-week Tuesday
@@ -1064,7 +1138,7 @@ service cloud.firestore {
           target.setMonth(0, 1 + ((9 - target.getDay()) % 7));
         }
         const weekNum = 1 + Math.ceil((firstTuesday - target) / (7 * 24 * 3600 * 1000));
-        return `W${Math.max(1, Math.min(53, weekNum))}`;
+        return `W${Math.max(1, Math.min(53, isNaN(weekNum) ? 39 : weekNum))}`;
       }
 
       async initCloudSync(isManualTest = false) {
@@ -1935,10 +2009,12 @@ service cloud.firestore {
           const hasAck = !!i.signature_data_url || !!i.acknowledgement_photo_url;
           const ackType = i.acknowledgement_photo_url ? 'photo' : (i.signature_data_url ? 'signature' : 'none');
 
+          const timeStr = i.completion_time ? String(i.completion_time).substring(0, 16).replace('T', ' ') : '-';
+
           return `
             <tr class="hover:bg-slate-50">
               <td class="p-3 font-mono font-bold text-slate-700">#${i.id}</td>
-              <td class="p-3 text-slate-500 whitespace-nowrap">${i.completion_time ? i.completion_time.substring(0, 16).replace('T', ' ') : '-'}</td>
+              <td class="p-3 text-slate-500 whitespace-nowrap">${timeStr}</td>
               <td class="p-3 font-semibold text-slate-800">${i.qc_initials || i.qc_name}</td>
               <td class="p-3 font-bold text-slate-900">${i.driver_name}</td>
               <td class="p-3 font-mono text-slate-600">${i.matched_sap_id || '-'}</td>
@@ -1953,12 +2029,12 @@ service cloud.firestore {
               <td class="p-3 text-center">
                 <div class="flex items-center justify-center gap-1">
                   ${hasPhoto ? `
-                    <button type="button" onclick="portal.openAcknowledgementModal(${i.id})" title="View Condition Photo" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-[10px] font-bold">
+                    <button type="button" onclick="portal.openAcknowledgementModal('${i.id}')" title="View Condition Photo" class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-[10px] font-bold">
                       📷 Photo
                     </button>
                   ` : ''}
                   ${hasAck ? `
-                    <button type="button" onclick="portal.openAcknowledgementModal(${i.id})" title="View Driver Proof" class="px-1.5 py-0.5 rounded ${ackType === 'photo' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'} text-[10px] font-bold">
+                    <button type="button" onclick="portal.openAcknowledgementModal('${i.id}')" title="View Driver Proof" class="px-1.5 py-0.5 rounded ${ackType === 'photo' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'} text-[10px] font-bold">
                       ${ackType === 'photo' ? '📄 Slip' : '✍️ Sign'}
                     </button>
                   ` : ''}
@@ -1972,7 +2048,7 @@ service cloud.firestore {
       }
 
       openAcknowledgementModal(inspectionId) {
-        const item = this.inspections.find(i => Number(i.id) === Number(inspectionId));
+        const item = this.inspections.find(i => String(i.id) === String(inspectionId));
         if (!item) return;
 
         document.getElementById('ackModalTitle').innerText = `Audit #${item.id} Proof Record`;
@@ -2011,9 +2087,10 @@ service cloud.firestore {
         }
 
         const details = document.getElementById('ackModalDetails');
+        const timeDisplay = item.completion_time ? String(item.completion_time).replace('T', ' ').substring(0, 19) : '-';
         details.innerHTML = `
           <div><strong>QC Inspector:</strong> ${item.qc_name} (${item.qc_initials})</div>
-          <div><strong>Timestamp:</strong> ${item.completion_time ? item.completion_time.replace('T', ' ').substring(0, 19) : '-'}</div>
+          <div><strong>Timestamp:</strong> ${timeDisplay}</div>
           <div><strong>Compliance Finding:</strong> <span class="font-bold ${item.has_violation ? 'text-rose-600' : 'text-emerald-700'}">${item.has_violation ? 'With Violation/s' : 'Clean Inspection'}</span></div>
           ${item.violation_remarks ? `<div class="pt-1"><strong>Citations:</strong> <p class="mt-0.5 text-rose-800 bg-rose-50 p-2 rounded-lg border border-rose-200 font-mono text-[11px] leading-relaxed">${item.violation_remarks}</p></div>` : ''}
         `;
@@ -2060,22 +2137,36 @@ service cloud.firestore {
           const data = await file.arrayBuffer();
           const wb = XLSX.read(data, { type: 'array' });
           const sheet = wb.Sheets[wb.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet);
+          const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-          const parsed = json.map(row => {
-            const sapId = row['SAP ID'] || row['SAPID'] || row['Driver SAP ID'] || row['ID'] || row['sap_id'];
-            const name = row['Full Name'] || row['Driver Name'] || row['Driver'] || row['NAME'] || '';
-            const plate = (row['Plate Number'] || row['Plate'] || row['PLATE'] || '').toUpperCase().trim();
-            const depotRaw = row['Depot'] || row['DEPOT'] || row['Station'] || 'CAN';
-            return {
-              sap_id: Number(sapId),
-              full_name: String(name).trim(),
-              plate_number: plate,
+          const parsed = [];
+          for (const row of json) {
+            const rawSap = fuzzyFindColumn(row, ['sapid', 'sap', 'driversapid', 'driverid', 'id']);
+            const nameVal = fuzzyFindColumn(row, ['fullname', 'driverfullname', 'drivername', 'driver', 'name']);
+            const plateVal = fuzzyFindColumn(row, ['platenumber', 'plateno', 'plate', 'vehicleplate', 'unit']);
+            const depotVal = fuzzyFindColumn(row, ['depot', 'station', 'location', 'hub']);
+            const statusVal = fuzzyFindColumn(row, ['status', 'activestatus']);
+
+            if (!rawSap && !nameVal) continue;
+
+            const cleanSap = parseInt(String(rawSap || '').replace(/\D/g, ''), 10);
+            if (!cleanSap || isNaN(cleanSap)) continue;
+
+            const depotRaw = String(depotVal || 'CAN').trim();
+
+            parsed.push({
+              sap_id: cleanSap,
+              full_name: String(nameVal || 'Driver').trim(),
+              plate_number: String(plateVal || '').toUpperCase().trim(),
               depot_raw: depotRaw,
-              depot_code: DEPOT_LOOKUP[depotRaw] || 'CAN',
-              status: row['Status'] || 'Active'
-            };
-          }).filter(d => d.sap_id && !isNaN(d.sap_id));
+              depot_code: resolveDepotCode(depotRaw),
+              status: String(statusVal || 'Active').trim()
+            });
+          }
+
+          if (parsed.length === 0) {
+            throw new Error('No valid drivers found. Ensure the spreadsheet contains SAP ID and Name columns.');
+          }
 
           this.drivers = parsed;
           await dbClear('drivers');
@@ -2086,13 +2177,14 @@ service cloud.firestore {
           this.renderDriverRegistryTable();
           this.updateDataCenterCounters();
 
-          // Push to cloud if connected
           if (this.firestore && this.isCloudActive) {
             this.pushDriversToCloud(parsed);
           }
         } catch (err) {
           console.error('File parse error:', err);
-          this.showToast('Upload Error', 'Could not parse drivers spreadsheet.', 'error');
+          this.showToast('Upload Error', err.message || 'Could not parse drivers spreadsheet.', 'error');
+        } finally {
+          e.target.value = '';
         }
       }
 
@@ -2120,48 +2212,141 @@ service cloud.firestore {
 
         try {
           const data = await file.arrayBuffer();
-          const wb = XLSX.read(data, { type: 'array' });
+          const wb = XLSX.read(data, { type: 'array', cellDates: true });
 
-          // Pick best response sheet
-          let targetSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('response') || n.toLowerCase().includes('form')) || wb.SheetNames[0];
-          const sheet = wb.Sheets[targetSheetName];
-          const json = XLSX.utils.sheet_to_json(sheet);
+          // Discover the appropriate worksheet with data rows
+          let targetSheetName = wb.SheetNames.find(n => 
+            n.toLowerCase().includes('response') || 
+            n.toLowerCase().includes('form') || 
+            n.toLowerCase().includes('sheet1') || 
+            n.toLowerCase().includes('qc')
+          ) || wb.SheetNames[0];
 
-          let autoId = 1;
-          const parsed = json.map(row => {
-            const rawId = row['ID'] || row['Id'] || row['id'] || row['Submission ID'] || autoId++;
-            const compTime = row['Completion time'] || row['Timestamp'] || row['Date'] || new Date().toISOString();
-            const driverName = row['Driver Name'] || row['Driver'] || row['Name'] || '';
-            const plate = (row['Inspected Plate'] || row['Plate Number'] || row['Plate'] || '').toUpperCase().trim();
-            const depotRaw = row['Depot'] || row['Station'] || 'CAN';
-            const remarks = row['Remarks'] || row['Violation Remarks'] || row['Violations'] || '';
-            const hasViol = Boolean(remarks && !remarks.toLowerCase().includes('clean') && !remarks.toLowerCase().includes('no violation'));
+          let sheet = wb.Sheets[targetSheetName];
+          let json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-            return {
-              id: Number(rawId),
-              start_time: row['Start time'] || compTime,
-              completion_time: compTime,
-              date: this.getOperationalDateStr(compTime),
-              week_number: this.getOperationalWeek(compTime),
-              qc_initials: row['QC Initials'] || row['Inspector'] || 'QC RC',
-              qc_name: row['Name'] || 'Inspector',
-              driver_name: String(driverName).trim(),
-              matched_sap_id: row['SAP ID'] ? Number(row['SAP ID']) : null,
+          if (!json || json.length === 0) {
+            for (const sName of wb.SheetNames) {
+              const testJson = XLSX.utils.sheet_to_json(wb.Sheets[sName], { defval: '' });
+              if (testJson && testJson.length > 0) {
+                targetSheetName = sName;
+                sheet = wb.Sheets[sName];
+                json = testJson;
+                break;
+              }
+            }
+          }
+
+          if (!json || json.length === 0) {
+            throw new Error(`Sheet "${targetSheetName}" is empty or has no recognizable data rows.`);
+          }
+
+          let autoId = Date.now();
+          const seenIds = new Set();
+          const parsed = [];
+
+          for (let idx = 0; idx < json.length; idx++) {
+            const row = json[idx];
+
+            // Ignore blank or padding rows
+            const nonBlankValues = Object.values(row).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+            if (nonBlankValues.length === 0) continue;
+
+            const rawId = fuzzyFindColumn(row, ['id', 'submissionid', 'recordid', 'no', 'number', 'entry', 'responseid']);
+            let finalId;
+            if (rawId !== undefined && rawId !== null && String(rawId).trim() !== '' && !isNaN(Number(rawId))) {
+              finalId = Number(rawId);
+            } else if (rawId !== undefined && rawId !== null && String(rawId).trim() !== '') {
+              finalId = String(rawId).trim();
+            } else {
+              finalId = autoId++;
+            }
+
+            while (seenIds.has(finalId)) {
+              finalId = typeof finalId === 'number' ? finalId + 1 : `${finalId}_${idx}`;
+            }
+            seenIds.add(finalId);
+
+            const rawCompTime = fuzzyFindColumn(row, ['completiontime', 'completion', 'timestamp', 'time', 'date', 'inspectiondate', 'submittime', 'submissiontime', 'createdtime']);
+            const compDate = normalizeExcelDate(rawCompTime);
+            const compIso = compDate.toISOString();
+
+            const rawStartTime = fuzzyFindColumn(row, ['starttime', 'start', 'begintime']);
+            const startIso = rawStartTime ? normalizeExcelDate(rawStartTime).toISOString() : compIso;
+
+            const driverName = String(fuzzyFindColumn(row, ['drivername', 'driverfullname', 'driver', 'fullname', 'nameofdriver', 'driverassigned', 'name']) || 'Driver Unassigned').trim();
+
+            const rawSap = fuzzyFindColumn(row, ['sapid', 'driversapid', 'sap', 'driverid', 'idnumber']);
+            let matchedSapId = null;
+            if (rawSap !== undefined && rawSap !== null && String(rawSap).trim() !== '') {
+              const parsedSap = parseInt(String(rawSap).replace(/\D/g, ''), 10);
+              if (!isNaN(parsedSap) && parsedSap > 0) matchedSapId = parsedSap;
+            }
+
+            const plate = String(fuzzyFindColumn(row, ['inspectedplate', 'platenumber', 'plateno', 'plate', 'vehicleplate', 'unitplate', 'platenum']) || 'UNASSIGNED').toUpperCase().trim();
+
+            const depotRaw = String(fuzzyFindColumn(row, ['depot', 'station', 'depotstation', 'selectdepot', 'location', 'hub']) || 'CAN').trim();
+            const depotCode = resolveDepotCode(depotRaw);
+
+            let qcInitials = String(fuzzyFindColumn(row, ['qcinitials', 'inspectorinitials', 'initials']) || '').trim().toUpperCase();
+            let qcName = String(fuzzyFindColumn(row, ['qcname', 'inspectorname', 'auditorname', 'inspector']) || '').trim();
+            if (!qcInitials && qcName) {
+              const nameParts = qcName.split(/\s+/).filter(Boolean);
+              qcInitials = nameParts.length >= 2 ? `QC ${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase() : 'QC RC';
+            }
+            if (!qcInitials) qcInitials = 'QC RC';
+            if (!qcName) qcName = qcInitials;
+
+            const typeRaw = String(fuzzyFindColumn(row, ['inspectiontype', 'typeofinspection', 'inspectionlocation', 'insideoutside', 'inout', 'type']) || 'Inside Depot Inspection').trim();
+            const inspectionType = (typeRaw.toLowerCase().includes('outside') || typeRaw.toLowerCase().includes('road') || typeRaw.toLowerCase().includes('route') || typeRaw.toLowerCase().includes('out'))
+              ? 'Outside Depot (Road/Route)'
+              : 'Inside Depot Inspection';
+
+            const remarks = String(fuzzyFindColumn(row, ['remarks', 'violationremarks', 'violations', 'findings', 'specificviolations', 'notes', 'violationnotes', 'comments', 'infractions']) || '').trim();
+            const findingVal = String(fuzzyFindColumn(row, ['finding', 'auditfinding', 'inspectionfinding', 'result', 'status', 'withviolation', 'compliance']) || '').toLowerCase();
+
+            let hasViol = false;
+            if (findingVal) {
+              if (findingVal.includes('with viol') || findingVal.includes('violation') || findingVal === 'yes' || findingVal === 'failed' || findingVal === 'flagged') {
+                hasViol = true;
+              } else if (findingVal.includes('without') || findingVal.includes('clean') || findingVal === 'no' || findingVal === 'passed') {
+                hasViol = false;
+              } else {
+                hasViol = Boolean(remarks && !remarks.toLowerCase().includes('clean') && !remarks.toLowerCase().includes('no violation') && !remarks.toLowerCase().includes('without violation'));
+              }
+            } else {
+              hasViol = Boolean(remarks && !remarks.toLowerCase().includes('clean') && !remarks.toLowerCase().includes('no violation') && !remarks.toLowerCase().includes('without violation'));
+            }
+
+            parsed.push({
+              id: finalId,
+              start_time: startIso,
+              completion_time: compIso,
+              date: this.getOperationalDateStr(compDate),
+              week_number: this.getOperationalWeek(compDate),
+              qc_initials: qcInitials,
+              qc_name: qcName,
+              driver_name: driverName,
+              matched_sap_id: matchedSapId,
               plate_number: plate,
               depot_raw: depotRaw,
-              depot_code: DEPOT_LOOKUP[depotRaw] || 'CAN',
-              inspection_type: row['Inspection Type'] || 'Inside Depot Inspection',
+              depot_code: depotCode,
+              inspection_type: inspectionType,
               has_violation: hasViol,
               violation_remarks: remarks,
               submitted_by_uid: 'excel-import'
-            };
-          });
+            });
+          }
+
+          if (parsed.length === 0) {
+            throw new Error('No valid inspection records could be extracted from this spreadsheet.');
+          }
 
           this.inspections = parsed;
           await dbClear('inspections');
           await dbPutBatch('inspections', parsed);
 
-          this.showToast('Inspections Ingested', `Loaded ${parsed.length.toLocaleString()} audit records.`, 'success');
+          this.showToast('Inspections Ingested', `Successfully ingested ${parsed.length.toLocaleString()} audit records from "${targetSheetName}".`, 'success');
           this.populateOpWeekFilter();
           this.renderDashboard();
           this.renderWeeklyMatrix();
@@ -2173,7 +2358,9 @@ service cloud.firestore {
           }
         } catch (err) {
           console.error('Inspections upload error:', err);
-          this.showToast('Upload Error', 'Could not parse inspection form spreadsheet.', 'error');
+          this.showToast('Upload Error', err.message || 'Could not parse inspection form spreadsheet.', 'error');
+        } finally {
+          e.target.value = '';
         }
       }
 
