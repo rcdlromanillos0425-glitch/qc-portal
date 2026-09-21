@@ -1,0 +1,2790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>QC Operations & Fleet Coverage Portal</title>
+
+  <!-- PWA & Mobile Optimization Meta Tags -->
+  <meta name="theme-color" content="#065f46" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="QC Portal" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23059669'><path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>" />
+
+  <!-- Tailwind CSS Framework -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SheetJS (Client-Side Excel Engine) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js (Data Visualizations) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    canvas#signaturePad {
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .pb-safe {
+      padding-bottom: env(safe-area-inset-bottom, 1.25rem);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-emerald-600 selection:text-white">
+
+  <header class="bg-emerald-950 text-white shadow-lg sticky top-0 z-40 border-b border-emerald-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand Title & Identity -->
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="portal.switchTab('dashboard')">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-black text-xl tracking-wider text-white shadow-md shadow-emerald-950/50">
+            QC
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-white text-base sm:text-lg tracking-tight">QC OPERATIONS</span>
+              <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-900 text-emerald-200 border border-emerald-700">Fleet Portal</span>
+            </div>
+            <p class="text-[11px] text-emerald-300 hidden sm:block">Coverage, Safety & Standards Compliance Operations</p>
+          </div>
+        </div>
+
+        <!-- Real-Time Cloud Sync & Device Identity -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Cloud Synchronization Pill -->
+          <div id="cloudSyncPill" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-900/90 text-emerald-200 border border-emerald-700/80 shadow-inner">
+            <span id="cloudSyncDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="cloudSyncText">Connecting cloud...</span>
+          </div>
+
+          <!-- Inspector Device UID -->
+          <div class="hidden xl:flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono bg-emerald-950/80 text-emerald-300 border border-emerald-800/80" title="Assigned Inspector Device ID">
+            <span class="text-emerald-400 font-bold">UID:</span>
+            <span id="cloudUserIdDisplay">authenticating...</span>
+          </div>
+
+          <!-- Database Health Pill -->
+          <div id="dbHealthPill" class="hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-900/90 text-emerald-200 border border-emerald-700/80 shadow-inner">
+            <span id="dbHealthDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span id="dbHealthText">Checking storage...</span>
+          </div>
+
+          <!-- Mobile Menu Hamburger -->
+          <button onclick="portal.toggleMobileMenu()" class="lg:hidden p-2 rounded-xl bg-emerald-900 text-emerald-200 hover:text-white border border-emerald-800 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <nav class="hidden lg:flex space-x-1 pb-3 overflow-x-auto custom-scrollbar" aria-label="Tabs">
+        <button onclick="portal.switchTab('dashboard')" id="navTab-dashboard" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition bg-emerald-800 text-white shadow-sm flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Dashboard & Coverage
+        </button>
+
+        <button onclick="portal.switchTab('form')" id="navTab-form" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-emerald-200 hover:text-white hover:bg-emerald-900 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          New Inspection
+        </button>
+
+        <button onclick="portal.switchTab('weekly')" id="navTab-weekly" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-emerald-200 hover:text-white hover:bg-emerald-900 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Weekly EOD Matrix
+        </button>
+
+        <button onclick="portal.switchTab('registry')" id="navTab-registry" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-emerald-200 hover:text-white hover:bg-emerald-900 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          Driver Registry (QCI)
+        </button>
+
+        <button onclick="portal.switchTab('logs')" id="navTab-logs" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition text-emerald-200 hover:text-white hover:bg-emerald-900 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+          Response Ledger
+        </button>
+
+        <button onclick="portal.switchTab('upload')" id="navTab-upload" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition bg-emerald-600 text-white hover:bg-emerald-500 flex items-center gap-2 shadow-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          Data & Upload Center
+        </button>
+      </nav>
+    </div>
+
+    <!-- Mobile Collapsible Navigation Menu -->
+    <div id="mobileNavMenu" class="hidden lg:hidden bg-emerald-950 px-4 py-3 space-y-1.5 border-t border-emerald-900">
+      <button onclick="portal.switchTab('dashboard')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-white hover:bg-emerald-900">Dashboard & Coverage</button>
+      <button onclick="portal.switchTab('form')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-200 hover:bg-emerald-900">New Inspection Entry</button>
+      <button onclick="portal.switchTab('weekly')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-200 hover:bg-emerald-900">Weekly EOD Matrix</button>
+      <button onclick="portal.switchTab('registry')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-200 hover:bg-emerald-900">Driver Registry (QCI)</button>
+      <button onclick="portal.switchTab('logs')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold text-emerald-200 hover:bg-emerald-900">Response Ledger</button>
+      <button onclick="portal.switchTab('upload')" class="w-full text-left px-3 py-2 rounded-xl text-xs font-bold bg-emerald-700 text-white">Data & Upload Center</button>
+    </div>
+  </header>
+
+  <div id="globalNotificationBanner" class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-950">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div class="flex items-center space-x-2">
+        <svg id="bannerIcon" class="w-4 h-4 text-amber-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+        </svg>
+        <span id="bannerMessage">No operational data loaded. Upload <code>drivers.xlsx</code> and <code>QC Inspection Form.xlsx</code> to populate real metrics.</span>
+      </div>
+      <button onclick="portal.switchTab('upload')" class="font-bold underline text-amber-900 hover:text-amber-950 self-start sm:self-auto">
+        Go to Data Center &rarr;
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Application Views Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full pb-safe">
+
+    <section id="view-dashboard" class="tab-pane block space-y-6">
+
+      <!-- Empty State Card (Visible when database is empty) -->
+      <div id="dashboardEmptyState" class="hidden bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm text-center max-w-3xl mx-auto space-y-6">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100 shadow-inner">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">Zero Simulated Data Active</h2>
+          <p class="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+            This portal does not display mocked figures or placeholder names. Upload your two real files to view 100% accurate, correlated analytics.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left pt-2">
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-bold text-emerald-700 uppercase">1. Driver Master</span>
+            <div class="font-bold text-slate-800 text-sm mt-1">drivers.xlsx</div>
+            <p class="text-[11px] text-slate-500 mt-1">Supplies active fleet roster, SAP IDs, and depot targets.</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+            <span class="text-xs font-bold text-blue-700 uppercase">2. QC Submissions</span>
+            <div class="font-bold text-slate-800 text-sm mt-1">QC Inspection Form.xlsx</div>
+            <p class="text-[11px] text-slate-500 mt-1">Supplies audits, findings, plates, and timestamps.</p>
+          </div>
+        </div>
+        <button onclick="portal.switchTab('upload')" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md shadow-emerald-700/20 text-sm transition inline-flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          Upload Real Files Now
+        </button>
+      </div>
+
+      <!-- Live Dashboard Data (Visible once data is loaded) -->
+      <div id="dashboardDataContent" class="space-y-6">
+        <!-- Filter Controls -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-black text-slate-900 tracking-tight">Fleet QC Inspection & Coverage Analytics</h2>
+            <p class="text-xs text-slate-500">Saturday–Friday operational week cycle with 6:00 AM daily shift reset</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Op Week:</span>
+              <select id="filterWeekSelect" onchange="portal.renderDashboard()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="ALL">All Operational Weeks (Sat–Fri)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold uppercase text-slate-400">Depot:</span>
+              <select id="filterDepotSelect" onchange="portal.renderDashboard()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="ALL">All Depots (Nationwide)</option>
+                <option value="CAN">Depot 1 - Caloocan (CAN)</option>
+                <option value="LAS">Depot 2 - Las Pinas (LAS)</option>
+                <option value="STA">Depot 3 - Manila (STA)</option>
+                <option value="TAG">Depot 4 - Taguig (TAG)</option>
+                <option value="RZL">Depot 5 - Cainta (RZL)</option>
+                <option value="CEB1">Depot 1 - Cebu (CEB1)</option>
+                <option value="SAS">Depot 1 - Davao (SAS)</option>
+                <option value="ELS">Depot 1 - El Salvador (ELS)</option>
+              </select>
+            </div>
+
+            <button onclick="portal.renderDashboard()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition" title="Refresh Calculations">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Total Inspections -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Total Inspections</div>
+            <div class="text-2xl sm:text-3xl font-black text-slate-900" id="kpiTotalInspections">0</div>
+            <div class="text-xs text-slate-500 font-semibold mt-1" id="kpiInspectionsSubtext">Inside & Outside Audits</div>
+          </div>
+
+          <!-- Active Drivers -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Active Roster Denominator</div>
+            <div class="text-2xl sm:text-3xl font-black text-blue-600" id="kpiActiveDrivers">0</div>
+            <div class="text-xs text-slate-500 font-semibold mt-1" id="kpiRosterSubtext">Active in drivers.xlsx</div>
+          </div>
+
+          <!-- Coverage % -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Inspection Coverage Rate</div>
+            <div class="text-2xl sm:text-3xl font-black text-emerald-600" id="kpiCoverageRate">0.0%</div>
+            <div class="text-xs text-slate-500 font-semibold mt-1"><span id="kpiUniqueDrivers">0</span> Unique Drivers Audited</div>
+          </div>
+
+          <!-- Violations Cited -->
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Violations Cited</div>
+            <div class="text-2xl sm:text-3xl font-black text-rose-600" id="kpiTotalViolations">0</div>
+            <div class="text-xs text-rose-600 font-semibold mt-1"><span id="kpiViolationRate">0.0%</span> Infraction Ratio</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Depot Progress Bars (2 Columns) -->
+          <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider">Depot Inspection Coverage Progress</h3>
+              <span class="text-xs text-slate-400 font-semibold">Benchmark: &ge; 70.0% Standard</span>
+            </div>
+            <div class="space-y-3.5 pt-2" id="depotBarsContainer">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Top Infractions Doughnut Chart (1 Column) -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-slate-900 text-sm uppercase tracking-wider mb-2">Infraction Distribution</h3>
+              <div class="relative min-h-[220px] flex items-center justify-center">
+                <canvas id="violationsDoughnutChart"></canvas>
+              </div>
+            </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 mt-4">
+              <strong>Smart Tagging:</strong> Extracted from the MS Forms remarks column and classified by category.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-form" class="tab-pane hidden max-w-2xl mx-auto space-y-6">
+      <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+        <div class="border-b pb-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Field Audit Entry
+          </div>
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">New QC Inspection Audit</h2>
+          <p class="text-xs text-slate-500 mt-1">Eliminates manual spelling errors via instant autocomplete against loaded drivers.</p>
+        </div>
+
+        <form id="inspectionForm" onsubmit="portal.handleFormSubmit(event)" class="space-y-5">
+          <!-- Inspector Name -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Inspector Full Name *</label>
+            <div class="flex flex-wrap gap-1.5 mb-2">
+              <button type="button" onclick="portal.quickSetInspector('Romanillos Rheymel Clark', 'QC RC')" class="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-lg">QC RC</button>
+              <button type="button" onclick="portal.quickSetInspector('Caratihan Paul Michael Pagiyen', 'QC PM')" class="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-lg">QC PM</button>
+              <button type="button" onclick="portal.quickSetInspector('Babon John', 'QC JB')" class="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-lg">QC JB</button>
+              <button type="button" onclick="portal.quickSetInspector('Semon Gregory Ross Almacen', 'QC GR')" class="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-lg">QC GR</button>
+              <button type="button" onclick="portal.quickSetInspector('Abella Aletho', 'QC AA')" class="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-lg">QC AA</button>
+            </div>
+            <input type="text" id="inputQcName" required placeholder="e.g. Romanillos Rheymel Clark" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm outline-none" />
+            <input type="hidden" id="inputQcInitials" value="QC RC" />
+          </div>
+
+          <!-- Driver Search Autocomplete -->
+          <div class="relative">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Driver Autocomplete Search (Name, SAP ID, or Plate) *</label>
+            <input type="text" id="inputDriverSearch" oninput="portal.handleDriverSearch(this.value)" autocomplete="off" placeholder="Start typing driver name or SAP ID..." class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm outline-none font-medium" />
+            <div id="driverSearchDropdown" class="hidden absolute z-30 w-full bg-white border border-slate-200 rounded-2xl shadow-xl mt-1 max-h-56 overflow-y-auto custom-scrollbar divide-y divide-slate-100"></div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Correlated Driver Profile</span>
+              <span id="formStatusBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Driver Official Name *</label>
+                <input type="text" id="inputDriverName" required class="w-full px-3 py-2 text-sm bg-white rounded-xl border border-slate-200 font-semibold text-slate-800 outline-none" />
+                <input type="hidden" id="inputSapId" value="" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Driver Depot *</label>
+                <select id="selectDepot" required class="w-full px-3 py-2 text-sm bg-white rounded-xl border border-slate-200 outline-none font-semibold">
+                  <option value="Depot 1 - Caloocan">Depot 1 - Caloocan (CAN)</option>
+                  <option value="Depot 2 - Las Pinas">Depot 2 - Las Pinas (LAS)</option>
+                  <option value="Depot 3 - Manila">Depot 3 - Manila (STA)</option>
+                  <option value="Depot 4 - Taguig">Depot 4 - Taguig (TAG)</option>
+                  <option value="Depot 5 - Cainta">Depot 5 - Cainta (RZL)</option>
+                  <option value="Depot 1 - Cebu">Depot 1 - Cebu (CEB1)</option>
+                  <option value="Depot 1 - Davao">Depot 1 - Davao (SAS)</option>
+                  <option value="Depot 1 - El Salvador">Depot 1 - El Salvador (ELS)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Registered Unit (Roster)</label>
+                <input type="text" id="inputRegisteredPlate" readonly placeholder="Auto-populated from roster" class="w-full px-3 py-2 text-sm bg-slate-100 text-slate-500 rounded-xl border border-slate-200 font-mono uppercase outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-emerald-800 mb-1">Inspected Physical Plate *</label>
+                <input type="text" id="inputInspectedPlate" required placeholder="Observed plate on shift" class="w-full px-3 py-2 text-sm bg-white rounded-xl border border-emerald-300 font-mono font-bold uppercase text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Operations Supervisor (OS)</label>
+              <input type="text" id="inputSupervisor" placeholder="Optional supervisor name" class="w-full px-3 py-2 text-sm bg-white rounded-xl border border-slate-200 outline-none" />
+            </div>
+          </div>
+
+          <!-- Location Type -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Inspection Location *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-emerald-500 bg-emerald-50/50 cursor-pointer">
+                <input type="radio" name="inspectionType" value="Depot (Inside Depot)" checked class="accent-emerald-600" />
+                <span class="text-xs font-bold text-slate-800">Inside Depot</span>
+              </label>
+              <label class="flex items-center gap-2 p-3 rounded-xl border border-slate-200 bg-white cursor-pointer">
+                <input type="radio" name="inspectionType" value="Outside (Route/ Road/ Charging Stations)" class="accent-emerald-600" />
+                <span class="text-xs font-bold text-slate-800">Outside Depot (Road / Route)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">Compliance Finding *</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" id="btnFindingClean" onclick="portal.setFindingViolation(false)" class="py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-emerald-600 bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Without Violation
+              </button>
+              <button type="button" id="btnFindingViolation" onclick="portal.setFindingViolation(true)" class="py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-slate-200 text-slate-600 hover:border-rose-400 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                With Violation/s
+              </button>
+            </div>
+            <input type="hidden" id="inputHasViolation" value="false" />
+          </div>
+
+          <!-- Conditional Infractions Box -->
+          <div id="violationDetailsContainer" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
+            <label class="block text-xs font-bold uppercase text-rose-900">Select Observed Non-Compliance Tags:</label>
+            <div class="flex flex-wrap gap-1.5" id="violationTagsWrapper">
+              <!-- Rendered via JS -->
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-rose-950 mb-1">Violation Remarks & Specifics</label>
+              <textarea id="inputViolationRemarks" rows="2" placeholder="Specific notes, defective gear, untucked polo, unauthorized pants, etc." class="w-full p-2.5 text-xs rounded-xl bg-white border border-rose-300 outline-none focus:ring-2 focus:ring-rose-500"></textarea>
+            </div>
+
+            <!-- Digital Signature Canvas -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-xs font-bold text-slate-800">Driver Acknowledgement / Signature:</label>
+                <button type="button" onclick="portal.clearSignaturePad()" class="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline">Clear</button>
+              </div>
+              <canvas id="signaturePad" class="w-full h-28 bg-white rounded-xl border border-slate-300"></canvas>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md shadow-emerald-700/25 transition flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Save & Record QC Inspection
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-weekly" class="tab-pane hidden space-y-6">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-xl font-black text-slate-900 tracking-tight">Weekly QC End-of-Day (EOD) Matrix</h2>
+              <span id="matrixWeekBadge" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">Week -</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Replicates Sheets W23–W39 (Sat–Fri cycle, 6:00 AM reset): Inside vs Outside audits</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-bold uppercase text-slate-500" title="Operational Date runs 06:00 AM to 05:59:59 AM next day">Op Date:</label>
+            <input type="date" id="matrixDatePicker" onchange="portal.renderWeeklyMatrix()" class="text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500" />
+            <button onclick="portal.exportWeeklyMatrixExcel()" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Export Matrix
+            </button>
+          </div>
+        </div>
+
+        <!-- EOD Metric Chips -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 gap-3">
+          <div><strong>Op Shift Date (6am Reset):</strong> <span id="eodTargetDate">-</span></div>
+          <div><strong>Inside Depot:</strong> <span id="eodInsideCount" class="font-bold text-slate-900">0</span></div>
+          <div><strong>Outside Depot:</strong> <span id="eodOutsideCount" class="font-bold text-emerald-700">0</span></div>
+          <div><strong>Violations Cited:</strong> <span id="eodViolationCount" class="font-bold text-rose-600">0</span></div>
+          <div><strong>Daily Grand Total:</strong> <span id="eodDailyTotal" class="font-black text-slate-900">0</span></div>
+        </div>
+
+        <!-- 2D High Density Matrix Table -->
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-2xl">
+          <table id="weeklyMatrixTable" class="w-full text-xs text-left border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+              <!-- Dynamically populated -->
+            </thead>
+            <tbody id="weeklyMatrixBody" class="divide-y divide-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+            <tfoot id="weeklyMatrixFooter" class="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-300">
+              <!-- Dynamically populated -->
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-registry" class="tab-pane hidden space-y-4">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 tracking-tight">Driver Fleet Compliance Registry (QCI)</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Replicates Sheet QCIperTXTX: Total audits and violation history cross-correlated with SAP IDs</p>
+          </div>
+          <button onclick="portal.exportRegistryExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Export QCI Registry (.xlsx)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <input type="text" id="registrySearchInput" oninput="portal.renderDriverRegistryTable()" placeholder="Search by driver name, SAP ID, plate, or depot..." class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" />
+          </div>
+          <div>
+            <select id="registryStatusFilter" onchange="portal.renderDriverRegistryTable()" class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="ALL">All Statuses</option>
+              <option value="Active" selected>Active Only</option>
+              <option value="Resign">Resign</option>
+              <option value="Resigning">Resigning</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-2xl max-h-[500px]">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b sticky top-0 z-10">
+              <tr>
+                <th class="p-3">SAP ID</th>
+                <th class="p-3">Driver Full Name</th>
+                <th class="p-3">Registered Plate</th>
+                <th class="p-3">Depot</th>
+                <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-center text-rose-600">With Violations</th>
+                <th class="p-3 text-center text-emerald-600">Without Violations</th>
+                <th class="p-3 text-center font-bold">Total Audits</th>
+              </tr>
+            </thead>
+            <tbody id="registryTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="registryPaginationInfo" class="text-xs text-slate-500 flex justify-between items-center pt-1"></div>
+      </div>
+    </section>
+
+    <section id="view-logs" class="tab-pane hidden space-y-4">
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 tracking-tight">Form Response Ledger</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Direct searchable record of all QC submissions with correlated SAP IDs</p>
+          </div>
+          <button onclick="portal.exportLogsExcel()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Export All Responses (.xlsx)
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="logsSearchInput" oninput="portal.renderInspectionLogsTable()" placeholder="Search logs by ID, inspector, driver name, or plate..." class="flex-1 px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" />
+          <select id="logsFindingFilter" onchange="portal.renderInspectionLogsTable()" class="px-3 py-2 text-xs border border-slate-300 rounded-xl bg-white font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">All Outcomes</option>
+            <option value="VIOLATION">With Violations Only</option>
+            <option value="CLEAN">Clean Inspections Only</option>
+          </select>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-2xl max-h-[500px]">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] border-b sticky top-0 z-10">
+              <tr>
+                <th class="p-3">ID</th>
+                <th class="p-3">Completion Time</th>
+                <th class="p-3">QC Inspector</th>
+                <th class="p-3">Inspected Driver</th>
+                <th class="p-3">Matched SAP ID</th>
+                <th class="p-3">Inspected Plate</th>
+                <th class="p-3">Depot</th>
+                <th class="p-3">Type</th>
+                <th class="p-3 text-center">Finding</th>
+                <th class="p-3">Violation Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div id="logsPaginationInfo" class="text-xs text-slate-500 flex justify-between items-center pt-1"></div>
+      </div>
+    </section>
+
+    <section id="view-upload" class="tab-pane hidden max-w-4xl mx-auto space-y-6">
+      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Data & File Ingestion Center</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Upload your weekly <code>drivers.xlsx</code> roster and historical <code>QC Inspection Form.xlsx</code> workbooks. The built-in Smart Matching Engine will correlate drivers and SAP IDs locally in your browser.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Zone 1: Weekly Drivers File -->
+          <div class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition relative">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 shadow-inner">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+            <h3 class="font-bold text-sm text-slate-900">Weekly Drivers Master</h3>
+            <p class="text-[11px] text-slate-500 mt-1 mb-4">Upload <code class="bg-slate-200 px-1 py-0.5 rounded font-bold">drivers.xlsx</code> (Roster with SAP IDs & statuses)</p>
+            <label class="cursor-pointer px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-700/20 transition">
+              Select drivers.xlsx
+              <input type="file" accept=".xlsx, .xls, .csv" onchange="portal.handleDriversUpload(event)" class="hidden" />
+            </label>
+            <div id="uploadDriversStatus" class="text-xs text-slate-500 mt-3 font-medium">Ready for upload.</div>
+          </div>
+
+          <!-- Zone 2: Historical QC Inspections File -->
+          <div class="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl p-6 flex flex-col items-center justify-center text-center bg-slate-50 transition relative">
+            <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 shadow-inner">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="font-bold text-sm text-slate-900">QC Inspection Workbook</h3>
+            <p class="text-[11px] text-slate-500 mt-1 mb-4">Upload <code class="bg-slate-200 px-1 py-0.5 rounded font-bold">QC Inspection Form...xlsx</code> (Response sheet)</p>
+            <label class="cursor-pointer px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md shadow-blue-700/20 transition">
+              Select QC Inspections.xlsx
+              <input type="file" accept=".xlsx, .xls, .csv" onchange="portal.handleInspectionsUpload(event)" class="hidden" />
+            </label>
+            <div id="uploadInspectionsStatus" class="text-xs text-slate-500 mt-3 font-medium">Ready for upload.</div>
+          </div>
+        </div>
+
+        <!-- Processing Progress Bar -->
+        <div id="uploadProgressBarContainer" class="hidden p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+          <div class="flex justify-between text-xs font-bold text-slate-700">
+            <span id="uploadProgressText">Processing records...</span>
+            <span id="uploadProgressPct">0%</span>
+          </div>
+          <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+            <div id="uploadProgressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-150" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Database Storage Management -->
+        <div class="border-t pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div>
+            <h4 class="text-xs font-bold uppercase text-slate-700">IndexedDB & Cloud Sync Health</h4>
+            <p id="storageFootprintText" class="text-[11px] text-slate-500">Database: <code>QC_Master_Fleet_DB</code></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="portal.forceCloudRefresh()" class="px-3.5 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold rounded-xl transition flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Force Cloud Pull
+            </button>
+            <button onclick="portal.promptClearDatabase()" class="px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold rounded-xl transition">
+              Clear Local Cache
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border">
+    <div id="toastIcon"></div>
+    <div>
+      <div id="toastTitle" class="text-xs font-bold"></div>
+      <div id="toastMessage" class="text-xs"></div>
+    </div>
+  </div>
+
+  <!-- Custom Confirmation Modal (Never using alert/confirm) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      <div class="flex items-center gap-3 text-rose-600">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <h3 id="confirmModalTitle" class="font-bold text-slate-900 text-base">Confirm Action</h3>
+      </div>
+      <p id="confirmModalMessage" class="text-xs text-slate-600 leading-relaxed"></p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="portal.closeConfirmModal(false)" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+        <button onclick="portal.closeConfirmModal(true)" id="confirmModalActionBtn" class="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-Time Cloud Synchronization Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'qc-fleet-portal';
+    let app = null;
+    let db = null;
+    let auth = null;
+    let cloudUser = null;
+    let cloudSyncActive = false;
+
+    // Helper functions to target direct root collections or subcollection paths cleanly
+    const getInspCollection = (firestore) => {
+      return typeof __app_id !== 'undefined'
+        ? collection(firestore, 'artifacts', appId, 'public', 'data', 'inspections')
+        : collection(firestore, 'qc_inspections');
+    };
+    const getRosterCollection = (firestore) => {
+      return typeof __app_id !== 'undefined'
+        ? collection(firestore, 'artifacts', appId, 'public', 'data', 'roster_batches')
+        : collection(firestore, 'qc_roster_batches');
+    };
+    const getInspDocRef = (firestore, id) => {
+      return typeof __app_id !== 'undefined'
+        ? doc(firestore, 'artifacts', appId, 'public', 'data', 'inspections', String(id))
+        : doc(firestore, 'qc_inspections', String(id));
+    };
+    const getRosterDocRef = (firestore, batchKey) => {
+      return typeof __app_id !== 'undefined'
+        ? doc(firestore, 'artifacts', appId, 'public', 'data', 'roster_batches', batchKey)
+        : doc(firestore, 'qc_roster_batches', batchKey);
+    };
+
+    const DEPOT_CODES = ['CAN', 'LAS', 'STA', 'TAG', 'RZL', 'CEB1', 'SAS', 'ELS'];
+
+    const DEPOT_RAW_TO_CODE = {
+      'Depot 1 - Caloocan': 'CAN',
+      'Depot 2 - Las Pinas': 'LAS',
+      'Depot 3 - Manila': 'STA',
+      'Depot 4 - Taguig': 'TAG',
+      'Depot 5 - Cainta': 'RZL',
+      'Depot 1 - Cebu': 'CEB1',
+      'Depot 1 - Davao': 'SAS',
+      'Depot 1 - El Salvador': 'ELS',
+      'Depot 3 - Las Pinas': 'LAS'
+    };
+
+    const INSPECTOR_INITIALS_MAP = {
+      'Babon John': 'QC JB',
+      'Caratihan Paul Michael Pagiyen': 'QC PM',
+      'Semon Gregory Ross Almacen': 'QC GR',
+      'Abella Aletho': 'QC AA',
+      'Abella Aletho Enriquez': 'QC AA',
+      'Aletho Enriquez Abella': 'QC AA',
+      'Tabuniar Neruel Agliam': 'QC NT',
+      'Tabuniar Neruel': 'QC NT',
+      'Dacoco Peter James': 'QC PJ',
+      'Balatinsayo Aries B': 'QC AB',
+      'Romanillos Rheymel Clark': 'QC RC',
+      'Rheymel Clark Romanillos': 'QC RC',
+      'Bueno Jettyford Feliciano': 'QC JF',
+      'Tamba Cezar Carmel': 'QC CT',
+      'TAMBA Cezar Carmel Panaguiton': 'QC CT'
+    };
+
+    /* Official Standards Basis: QCF-PH 30-Point Checklist + PH_OPS02 Internal Regulations */
+    const QCF_STANDARDS_CHECKLIST = [
+      // 1. APPEARANCE STANDARDS (QCF 1-6)
+      { id: 'QCF-01', category: 'APPEARANCE', name: 'Hair clean, neat, not dyed brightly', rule: 'QCF Item 1' },
+      { id: 'QCF-02', category: 'APPEARANCE', name: 'Clean body, no odor, no beard, nails max 2mm', rule: 'QCF Item 2 & PH_OPS02 II.3.4' },
+      { id: 'QCF-03', category: 'APPEARANCE', name: 'Simple jewelry only (no earrings, no visible tattoos)', rule: 'QCF Item 3' },
+      { id: 'QCF-04', category: 'APPEARANCE', name: 'Uniforms neat, clean, flat, odorless, not faded', rule: 'QCF Item 4 & PH_OPS02 II.2' },
+      { id: 'QCF-05', category: 'APPEARANCE', name: 'Clean shoes (No sandals, flip-flops, or slippers)', rule: 'QCF Item 5 & PH_OPS02 II.2' },
+      { id: 'QCF-06', category: 'APPEARANCE', name: 'Driving posture: straight back, upright', rule: 'QCF Item 6' },
+
+      // 2. STANDARDS ON CONDUCT (QCF 7-11)
+      { id: 'QCF-07', category: 'CONDUCT', name: 'Drive safely, obey speed limits, no phone while driving', rule: 'QCF Item 7 & PH_OPS02 II.4' },
+      { id: 'QCF-08', category: 'CONDUCT', name: 'Both hands on steering wheel while vehicle moving', rule: 'QCF Item 8' },
+      { id: 'QCF-09', category: 'CONDUCT', name: 'No personal belongings in car (except 1 water bottle)', rule: 'QCF Item 9' },
+      { id: 'QCF-10', category: 'CONDUCT', name: 'No smoking, alcohol, food/drink, loud music or media', rule: 'QCF Item 10 & PH_OPS02 II.3.2' },
+      { id: 'QCF-11', category: 'CONDUCT', name: 'Proper charging station parking, no pole obstruction', rule: 'QCF Item 11' },
+
+      // 3. EXTERIOR STANDARDS (QCF 12-17)
+      { id: 'QCF-12', category: 'EXTERIOR', name: 'Green SM Taxi brand logo complete, no tears/scratches', rule: 'QCF Item 12' },
+      { id: 'QCF-13', category: 'EXTERIOR', name: 'Body paint clean, no dents, distortions, or large scratches', rule: 'QCF Item 13' },
+      { id: 'QCF-14', category: 'EXTERIOR', name: 'Vehicle lighting system complete (headlights, taillights)', rule: 'QCF Item 14' },
+      { id: 'QCF-15', category: 'EXTERIOR', name: 'Trunk neatly arranged, always closed while moving', rule: 'QCF Item 15' },
+      { id: 'QCF-16', category: 'EXTERIOR', name: 'Mirrors & glass intact (no cracks), doors open/close easily', rule: 'QCF Item 16' },
+      { id: 'QCF-17', category: 'EXTERIOR', name: 'Tires complete, working condition, proper tread depth', rule: 'QCF Item 17' },
+
+      // 4. INTERIOR & VEHICLE ACCESSORIES (QCF 18-30)
+      { id: 'QCF-18', category: 'INTERIOR', name: 'Seats clean, standard position, seatbelts working', rule: 'QCF Item 18' },
+      { id: 'QCF-19', category: 'INTERIOR', name: 'Car floor clean, dashboard & steering wheel intact', rule: 'QCF Item 19' },
+      { id: 'QCF-20', category: 'INTERIOR', name: 'Car documents complete and valid (OR/CR, Insurance)', rule: 'QCF Item 20 & PH_OPS02 G1b.17' },
+      { id: 'QCF-21', category: 'INTERIOR', name: 'Main screen always displays standard GSM interface', rule: 'QCF Item 21' },
+      { id: 'QCF-22', category: 'INTERIOR', name: 'Air conditioning standard 23°C operational', rule: 'QCF Item 22' },
+      { id: 'QCF-23', category: 'INTERIOR', name: 'Interior lights functioning properly with doors', rule: 'QCF Item 23' },
+      { id: 'QCF-24', category: 'INTERIOR', name: 'Vehicle powertrain/engine smooth, no unusual noise', rule: 'QCF Item 24' },
+      { id: 'QCF-25', category: 'INTERIOR', name: 'Wi-Fi stable, standard network available', rule: 'QCF Item 25' },
+      { id: 'QCF-26', category: 'INTERIOR', name: 'Sun visor clean, no competitor ads', rule: 'QCF Item 26' },
+      { id: 'QCF-27', category: 'INTERIOR', name: 'Advertising bag clean, not torn, hung per GSM specs', rule: 'QCF Item 27' },
+      { id: 'QCF-28', category: 'INTERIOR', name: 'QR Code for VinFast consulting clear and intact', rule: 'QCF Item 28' },
+      { id: 'QCF-29', category: 'INTERIOR', name: 'QR Code for bank transfer clean, clear, and visible', rule: 'QCF Item 29' },
+      { id: 'QCF-30', category: 'INTERIOR', name: 'POS terminal clean, functioning, receipt paper loaded', rule: 'QCF Item 30' },
+
+      // 5. PH_OPS02 CRITICAL REGULATIONS & SAFETY EQUIPMENT
+      { id: 'OPS-CAM-01', category: 'PH_OPS02', name: 'In-Car Camera: Covering (paper, mask, cloth, etc.)', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-CAM-02', category: 'PH_OPS02', name: 'In-Car Camera: Disabling (unplugged, cut power, jammer)', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-CAM-03', category: 'PH_OPS02', name: 'In-Car Camera: Turned away / altered position', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-CAM-04', category: 'PH_OPS02', name: 'In-Car Camera: Blurred lens (tape, glue, paint)', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-CAM-05', category: 'PH_OPS02', name: 'In-Car Camera: Light/laser shone directly into camera', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-CAM-06', category: 'PH_OPS02', name: 'In-Car Camera: Switch installed or turned off at will', rule: 'PH_OPS02 G2.1' },
+      { id: 'OPS-SAFE-01', category: 'PH_OPS02', name: 'Emergency Equipment: Missing Tire Sealant', rule: 'PH_OPS02 Safety Std' },
+      { id: 'OPS-SAFE-02', category: 'PH_OPS02', name: 'Emergency Equipment: Missing First Aid Kit / EWD', rule: 'PH_OPS02 Safety Std' },
+      { id: 'OPS-SAFE-03', category: 'PH_OPS02', name: 'Regulatory: Missing LTFRB ID display', rule: 'PH_OPS02 & LTFRB Memo' },
+      { id: 'OPS-SAFE-04', category: 'PH_OPS02', name: 'Monitoring: Tampered GPS / No GPS Device Cover', rule: 'PH_OPS02 G1a' },
+      { id: 'OPS-UNIF-01', category: 'PH_OPS02', name: 'Uniform: Untucked polo shirt / No dark-colored belt', rule: 'PH_OPS02 II.2' },
+      { id: 'OPS-UNIF-02', category: 'PH_OPS02', name: 'Uniform: Unauthorized pants (jeans/colored/shorts)', rule: 'PH_OPS02 II.2' }
+    ];
+
+    const DB_NAME = 'QC_Master_Fleet_DB';
+    const DB_VERSION = 1;
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const dbInstance = e.target.result;
+          if (!dbInstance.objectStoreNames.contains('drivers')) {
+            dbInstance.createObjectStore('drivers', { keyPath: 'sap_id' });
+          }
+          if (!dbInstance.objectStoreNames.contains('inspections')) {
+            const store = dbInstance.createObjectStore('inspections', { keyPath: 'id' });
+            store.createIndex('week_number', 'week_number', { unique: false });
+            store.createIndex('depot_code', 'depot_code', { unique: false });
+            store.createIndex('date', 'date', { unique: false });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbPutBatch(storeName, records) {
+      const dbInstance = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        for (let i = 0; i < records.length; i++) {
+          store.put(records[i]);
+        }
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function dbGetAll(storeName) {
+      const dbInstance = await openDB();
+      return new Promise((resolve, reject) => {
+        const tx = dbInstance.transaction(storeName, 'readonly');
+        const store = tx.objectStore(storeName);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    class SmartDriverMatcher {
+      constructor() {
+        this.driversBySapId = new Map();
+        this.driversByTokenKey = new Map();
+        this.driversByDepot = new Map();
+        this.driversByPlate = new Map();
+        this.driverTokensList = [];
+      }
+
+      indexDrivers(driverList) {
+        this.driversBySapId.clear();
+        this.driversByTokenKey.clear();
+        this.driversByDepot.clear();
+        this.driversByPlate.clear();
+        this.driverTokensList = [];
+
+        driverList.forEach(driver => {
+          this.driversBySapId.set(driver.sap_id, driver);
+
+          const tokens = this.tokenizeName(driver.full_name);
+          const tokenKey = tokens.slice().sort().join(' ');
+          this.driversByTokenKey.set(tokenKey, driver);
+
+          if (driver.depot) {
+            if (!this.driversByDepot.has(driver.depot)) {
+              this.driversByDepot.set(driver.depot, []);
+            }
+            this.driversByDepot.get(driver.depot).push(driver);
+          }
+
+          if (driver.license_plate) {
+            const cleanPlate = driver.license_plate.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+            if (cleanPlate) {
+              if (!this.driversByPlate.has(cleanPlate)) {
+                this.driversByPlate.set(cleanPlate, []);
+              }
+              this.driversByPlate.get(cleanPlate).push(driver);
+            }
+          }
+
+          this.driverTokensList.push({
+            driver,
+            tokens,
+            tokenSet: new Set(tokens),
+            tokenKey
+          });
+        });
+      }
+
+      tokenizeName(nameStr) {
+        if (!nameStr) return [];
+        return nameStr
+          .toLowerCase()
+          .replace(/[.,\-\/()]/g, ' ')
+          .replace(/\b(jr|sr|ii|iii|iv|v|status|activate|resigned|active)\b/g, '')
+          .split(/\s+/)
+          .filter(token => token.length >= 2);
+      }
+
+      correlateInspection(typedName, inspectedPlate, depotCode) {
+        const inspTokens = this.tokenizeName(typedName);
+        if (inspTokens.length === 0) {
+          return { driver: null, confidence: 'Unmatched' };
+        }
+
+        const sortedKey = inspTokens.slice().sort().join(' ');
+        if (this.driversByTokenKey.has(sortedKey)) {
+          return { driver: this.driversByTokenKey.get(sortedKey), confidence: 'Exact' };
+        }
+
+        let candidatePool = [];
+        if (depotCode && this.driversByDepot.has(depotCode)) {
+          const depotDrivers = new Set(this.driversByDepot.get(depotCode));
+          candidatePool = this.driverTokensList.filter(item => depotDrivers.has(item.driver));
+        }
+        if (candidatePool.length === 0) {
+          candidatePool = this.driverTokensList;
+        }
+
+        let bestCandidate = null;
+        let bestScore = 0;
+
+        for (let i = 0; i < candidatePool.length; i++) {
+          const item = candidatePool[i];
+          let matches = 0;
+          for (let j = 0; j < inspTokens.length; j++) {
+            const t = inspTokens[j];
+            if (item.tokenSet.has(t)) {
+              matches++;
+            } else {
+              for (const dt of item.tokens) {
+                if (dt.startsWith(t) || t.startsWith(dt)) {
+                  matches += 0.85;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (matches > 0) {
+            let score = (matches / Math.max(inspTokens.length, item.tokens.length)) * 100;
+            if (depotCode && item.driver.depot === depotCode) score += 12;
+            if (inspectedPlate && item.driver.license_plate) {
+              const cp1 = inspectedPlate.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+              const cp2 = item.driver.license_plate.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+              if (cp1 && cp2 && cp1 === cp2) score += 15;
+            }
+
+            if (score > bestScore) {
+              bestScore = score;
+              bestCandidate = item.driver;
+            }
+          }
+        }
+
+        if (bestCandidate && bestScore >= 68) {
+          return { driver: bestCandidate, confidence: 'Smart Match' };
+        }
+
+        if (inspectedPlate) {
+          const cleanP = inspectedPlate.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+          if (this.driversByPlate.has(cleanP)) {
+            const matches = this.driversByPlate.get(cleanP);
+            const depotMatches = depotCode ? matches.filter(d => d.depot === depotCode && d.status === 'Active') : matches;
+            if (depotMatches.length === 1) {
+              return { driver: depotMatches[0], confidence: 'Plate Fallback' };
+            }
+          }
+        }
+
+        return { driver: null, confidence: 'Unmatched' };
+      }
+    }
+
+    class PortalEngine {
+      constructor() {
+        this.drivers = [];
+        this.inspections = [];
+        this.matcher = new SmartDriverMatcher();
+        this.activeTab = 'dashboard';
+        this.selectedViolations = new Set();
+        this.currentChecklistCategory = 'ALL';
+        this.hasViolation = false;
+        this.acknowledgementMode = 'signature'; // 'signature' or 'photo'
+        this.uploadedPhotoDataUrl = null;
+        this.uploadedPhotoName = null;
+        this.doughnutChart = null;
+        this.confirmCallback = null;
+        this.sigCanvas = null;
+        this.sigCtx = null;
+        this.isDrawing = false;
+        this.hasDrawnSignature = false;
+        this.cloudUnsubs = [];
+      }
+
+      async init() {
+        this.setupSignatureCanvas();
+        this.renderViolationChecklist();
+        await this.loadLocalCache();
+        await this.initializeCloudSync();
+      }
+
+      async initializeCloudSync() {
+        const dot = document.getElementById('cloudSyncDot');
+        const txt = document.getElementById('cloudSyncText');
+        const uidEl = document.getElementById('cloudUserIdDisplay');
+
+        // Built-in project configuration for qc-operations-portal
+        const defaultFirebaseConfig = {
+          apiKey: "AIzaSyAk8_dmUBY6UtxaPKP9sveVw4SP5oZJkgk",
+          authDomain: "qc-operations-portal.firebaseapp.com",
+          projectId: "qc-operations-portal",
+          storageBucket: "qc-operations-portal.firebasestorage.app",
+          messagingSenderId: "569518114080",
+          appId: "1:569518114080:web:571bb16e8c4485c3340345",
+          measurementId: "G-9QHFGPFNV2"
+        };
+
+        let firebaseConfigRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        if (!firebaseConfigRaw) {
+          firebaseConfigRaw = localStorage.getItem('qc_custom_firebase_config') || defaultFirebaseConfig;
+        }
+
+        try {
+          const config = typeof firebaseConfigRaw === 'string' ? JSON.parse(firebaseConfigRaw) : firebaseConfigRaw;
+          app = initializeApp(config);
+          auth = getAuth(app);
+          db = getFirestore(app);
+
+          // 1. Establish persistent Inspector Device UID (ensures offline and fallback continuity)
+          let deviceId = localStorage.getItem('qc_inspector_device_uid');
+          if (!deviceId) {
+            deviceId = 'QC-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+            localStorage.setItem('qc_inspector_device_uid', deviceId);
+          }
+
+          // 2. Attempt Authentication with a 3.5s timeout (does not block Firestore if Auth is disabled)
+          const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+          try {
+            const authPromise = token ? signInWithCustomToken(auth, token) : signInAnonymously(auth);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), 3500));
+            const userCred = await Promise.race([authPromise, timeoutPromise]);
+            cloudUser = userCred.user;
+          } catch (authErr) {
+            console.warn('Anonymous auth bypassed (using Device UID fallback):', authErr.message || authErr.code);
+            cloudUser = { uid: deviceId, isFallback: true };
+          }
+
+          if (uidEl) uidEl.innerText = cloudUser.uid;
+
+          // 3. Test Firestore Read & Write capability directly
+          const pingDocRef = doc(db, 'qc_system', 'health');
+          await setDoc(pingDocRef, { ping: Date.now(), deviceId: cloudUser.uid }, { merge: true });
+
+          // If write succeeded, Firestore is fully unlocked and ready!
+          cloudSyncActive = true;
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+          txt.innerText = 'Live Cloud Active';
+
+          this.bindRealtimeListeners();
+          this.showToast('Cloud Connected', `Sync active as Inspector UID: ${cloudUser.uid}`, 'success');
+        } catch (err) {
+          console.warn('Cloud connection check result:', err);
+          cloudSyncActive = false;
+
+          if (err.code === 'permission-denied') {
+            dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-ping';
+            txt.innerText = 'Rules Locked (Tap to Fix)';
+            this.showToast('Firestore Rules Locked', 'Database rules are currently set to false. Tap status pill to copy the fix.', 'error');
+          } else {
+            dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+            txt.innerText = 'Cloud Warning (Tap to Fix)';
+            this.showToast('Cloud Notice', err.message || 'Check connection', 'info');
+          }
+          if (uidEl) uidEl.innerText = 'offline-cached';
+        }
+      }
+
+      openCloudConfigModal() {
+        const modal = document.getElementById('cloudConfigModal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        this.runDiagnosticsUI();
+      }
+
+      closeCloudConfigModal() {
+        const modal = document.getElementById('cloudConfigModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      async testCloudConnectionNow() {
+        this.showToast('Testing...', 'Verifying Firestore permissions...', 'info');
+        await this.initializeCloudSync();
+        this.runDiagnosticsUI();
+      }
+
+      async runDiagnosticsUI() {
+        const stepConfig = document.getElementById('diagStepConfig');
+        const stepAuth = document.getElementById('diagStepAuth');
+        const stepFs = document.getElementById('diagStepFirestore');
+        const badge = document.getElementById('diagOverallBadge');
+        const solutionBox = document.getElementById('diagSolutionBox');
+
+        stepConfig.innerHTML = '✅ Project: <code>qc-operations-portal</code>';
+        
+        if (cloudUser) {
+          stepAuth.innerHTML = cloudUser.isFallback
+            ? `<span class="text-amber-600">⚡ Device UID (${cloudUser.uid})</span>`
+            : `<span class="text-emerald-600">✅ Authenticated (${cloudUser.uid.substring(0, 8)}...)</span>`;
+        } else {
+          stepAuth.innerHTML = '<span class="text-slate-400">Waiting</span>';
+        }
+
+        if (cloudSyncActive) {
+          stepFs.innerHTML = '<span class="text-emerald-600 font-bold">✅ Read & Write Allowed</span>';
+          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+          badge.innerText = '🟢 Connected';
+          if (solutionBox) solutionBox.classList.add('hidden');
+        } else {
+          stepFs.innerHTML = '<span class="text-rose-600 font-bold">❌ Permission Denied / Locked</span>';
+          badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800';
+          badge.innerText = '🔴 Rules Locked';
+          if (solutionBox) solutionBox.classList.remove('hidden');
+        }
+      }
+
+      copyFirestoreRules() {
+        const text = `rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`;
+        const tempTa = document.createElement('textarea');
+        tempTa.value = text;
+        document.body.appendChild(tempTa);
+        tempTa.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempTa);
+        this.showToast('Rules Copied!', 'Paste into Firebase > Firestore > Rules and click Publish.', 'success');
+      }
+
+      bindRealtimeListeners() {
+        if (!db) return;
+
+        // Clean up prior listeners if any
+        this.cloudUnsubs.forEach(unsub => unsub && unsub());
+        this.cloudUnsubs = [];
+
+        // 1. Real-Time Listener: Inspections (Shared across all QCs)
+        const inspColl = getInspCollection(db);
+        const unsubInsp = onSnapshot(
+          inspColl,
+          async (snapshot) => {
+            if (!snapshot.empty) {
+              const cloudRecords = [];
+              snapshot.forEach(docSnap => {
+                cloudRecords.push(docSnap.data());
+              });
+
+              // Merge cloud records with local
+              const localMap = new Map();
+              this.inspections.forEach(i => localMap.set(Number(i.id), i));
+              cloudRecords.forEach(cr => localMap.set(Number(cr.id), cr));
+
+              this.inspections = Array.from(localMap.values()).sort((a, b) => Number(b.id) - Number(a.id));
+              await dbPutBatch('inspections', this.inspections);
+
+              this.updateDatabasePill();
+              this.populateWeekDropdown();
+              this.renderCurrentView();
+            }
+          },
+          (error) => {
+            console.warn('Inspections cloud listener warning:', error);
+          }
+        );
+        this.cloudUnsubs.push(unsubInsp);
+
+        // 2. Real-Time Listener: Driver Roster Batches (Shared nationwide roster)
+        const rosterColl = getRosterCollection(db);
+        const unsubRoster = onSnapshot(
+          rosterColl,
+          async (snapshot) => {
+            if (!snapshot.empty) {
+              const allBatchedDrivers = [];
+              snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data && Array.isArray(data.drivers)) {
+                  allBatchedDrivers.push(...data.drivers);
+                }
+              });
+
+              if (allBatchedDrivers.length > 0) {
+                const driverMap = new Map();
+                this.drivers.forEach(d => driverMap.set(Number(d.sap_id), d));
+                allBatchedDrivers.forEach(d => driverMap.set(Number(d.sap_id), d));
+
+                this.drivers = Array.from(driverMap.values());
+                this.matcher.indexDrivers(this.drivers);
+                await dbPutBatch('drivers', this.drivers);
+
+                this.updateDatabasePill();
+                this.renderCurrentView();
+              }
+            }
+          },
+          (error) => {
+            console.warn('Roster cloud listener warning:', error);
+          }
+        );
+        this.cloudUnsubs.push(unsubRoster);
+      }
+
+      renderCurrentView() {
+        if (this.activeTab === 'dashboard') this.renderDashboard();
+        else if (this.activeTab === 'weekly') this.renderWeeklyMatrix();
+        else if (this.activeTab === 'registry') this.renderDriverRegistryTable();
+        else if (this.activeTab === 'logs') this.renderInspectionLogsTable();
+      }
+
+      async loadLocalCache() {
+        this.drivers = await dbGetAll('drivers');
+        this.inspections = await dbGetAll('inspections');
+
+        // Automatically re-align cached inspections with Saturday-to-Friday and 6 AM daily reset
+        let recomputed = 0;
+        this.inspections.forEach(i => {
+          if (i.completion_time) {
+            const expectedDate = this.getOperationalDateStr(i.completion_time);
+            const expectedWeek = this.getOperationalWeek(i.completion_time);
+            if (i.date !== expectedDate || i.week_number !== expectedWeek) {
+              i.date = expectedDate;
+              i.week_number = expectedWeek;
+              recomputed++;
+            }
+          }
+        });
+        if (recomputed > 0) {
+          await dbPutBatch('inspections', this.inspections);
+        }
+
+        this.matcher.indexDrivers(this.drivers);
+        this.updateDatabasePill();
+
+        if (this.drivers.length === 0 && this.inspections.length === 0) {
+          document.getElementById('dashboardEmptyState').classList.remove('hidden');
+          document.getElementById('dashboardDataContent').classList.add('hidden');
+          this.setBannerNotice(true, 'No operational data loaded. Upload <code>drivers.xlsx</code> and <code>QC Inspection Form.xlsx</code> or wait for cloud sync.');
+        } else {
+          document.getElementById('dashboardEmptyState').classList.add('hidden');
+          document.getElementById('dashboardDataContent').classList.remove('hidden');
+          this.populateWeekDropdown();
+          this.renderDashboard();
+          this.renderWeeklyMatrix();
+          this.renderDriverRegistryTable();
+          this.renderInspectionLogsTable();
+          this.setBannerNotice(false, `Active Local + Cloud Sync: ${this.drivers.length.toLocaleString()} roster drivers, ${this.inspections.length.toLocaleString()} inspections (Sat–Fri cycles, 6am reset active).`);
+        }
+
+        const footprint = document.getElementById('storageFootprintText');
+        if (footprint) {
+          footprint.innerHTML = `IndexedDB + Cloud Sync &mdash; ${this.drivers.length.toLocaleString()} drivers, ${this.inspections.length.toLocaleString()} audits synchronized (Sat–Fri, 6am reset).`;
+        }
+      }
+
+      updateDatabasePill() {
+        const dot = document.getElementById('dbHealthDot');
+        const txt = document.getElementById('dbHealthText');
+        if (!dot || !txt) return;
+
+        if (this.drivers.length === 0 && this.inspections.length === 0) {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+          txt.innerText = 'Syncing...';
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+          const activeCount = this.drivers.filter(d => d.status === 'Active').length;
+          txt.innerText = `${activeCount.toLocaleString()} Active | ${this.inspections.length.toLocaleString()} Audits`;
+        }
+      }
+
+      setBannerNotice(isWarning, msg) {
+        const banner = document.getElementById('globalNotificationBanner');
+        const icon = document.getElementById('bannerIcon');
+        const text = document.getElementById('bannerMessage');
+        text.innerHTML = msg;
+        if (isWarning) {
+          banner.className = 'bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-950';
+          if (icon) icon.setAttribute('class', 'w-4 h-4 text-amber-700 flex-shrink-0');
+        } else {
+          banner.className = 'bg-emerald-50 border-b border-emerald-200 px-4 py-2.5 text-xs text-emerald-950';
+          if (icon) icon.setAttribute('class', 'w-4 h-4 text-emerald-700 flex-shrink-0');
+        }
+      }
+
+      populateWeekDropdown() {
+        const sel = document.getElementById('filterWeekSelect');
+        if (!sel) return;
+        const currentVal = sel.value;
+        const weeks = new Set();
+        this.inspections.forEach(i => {
+          if (i.week_number) weeks.add(i.week_number);
+        });
+
+        const sorted = Array.from(weeks).sort((a, b) => b - a);
+        sel.innerHTML = `<option value="ALL">All Operational Weeks (Cumulative)</option>`;
+        sorted.forEach(w => {
+          sel.innerHTML += `<option value="${w}">Week ${w} (Sat–Fri Operational)</option>`;
+        });
+        if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+          sel.value = currentVal;
+        } else if (sorted.length > 0) {
+          sel.value = sorted[0];
+        }
+      }
+
+      renderDashboard() {
+        if (this.drivers.length === 0 && this.inspections.length === 0) return;
+
+        const weekVal = document.getElementById('filterWeekSelect').value;
+        const depotVal = document.getElementById('filterDepotSelect').value;
+
+        const filteredInspections = this.inspections.filter(i => {
+          if (weekVal !== 'ALL' && i.week_number !== Number(weekVal)) return false;
+          if (depotVal !== 'ALL' && i.depot_code !== depotVal) return false;
+          return true;
+        });
+
+        const activeDriversList = this.drivers.filter(d => {
+          if (d.status !== 'Active') return false;
+          if (depotVal !== 'ALL' && d.depot !== depotVal) return false;
+          return true;
+        });
+
+        const totalActive = activeDriversList.length;
+        const totalInspections = filteredInspections.length;
+
+        const uniqueActiveDrivers = new Set();
+        filteredInspections.forEach(i => {
+          if (i.matched_sap_id) {
+            const d = this.matcher.driversBySapId.get(i.matched_sap_id);
+            if (d && d.status === 'Active') {
+              uniqueActiveDrivers.add(i.matched_sap_id);
+            }
+          } else {
+            uniqueActiveDrivers.add(i.driver_name.toUpperCase());
+          }
+        });
+
+        const totalViolations = filteredInspections.filter(i => i.has_violation).length;
+        const coverageRate = totalActive > 0 ? ((uniqueActiveDrivers.size / totalActive) * 100).toFixed(1) : '0.0';
+        const violationRate = totalInspections > 0 ? ((totalViolations / totalInspections) * 100).toFixed(1) : '0.0';
+
+        document.getElementById('kpiTotalInspections').innerText = totalInspections.toLocaleString();
+        document.getElementById('kpiActiveDrivers').innerText = totalActive.toLocaleString();
+        document.getElementById('kpiCoverageRate').innerText = `${coverageRate}%`;
+        document.getElementById('kpiUniqueDrivers').innerText = uniqueActiveDrivers.size.toLocaleString();
+        document.getElementById('kpiTotalViolations').innerText = totalViolations.toLocaleString();
+        document.getElementById('kpiViolationRate').innerText = `${violationRate}%`;
+
+        this.renderDepotBars(weekVal);
+        this.renderInfractionsChart(filteredInspections);
+      }
+
+      renderDepotBars(weekVal) {
+        const container = document.getElementById('depotBarsContainer');
+        if (!container) return;
+
+        let html = '';
+        DEPOT_CODES.forEach(depot => {
+          const depotInspections = this.inspections.filter(i => {
+            if (weekVal !== 'ALL' && i.week_number !== Number(weekVal)) return false;
+            return i.depot_code === depot;
+          });
+
+          const unique = new Set();
+          depotInspections.forEach(i => {
+            if (i.matched_sap_id) unique.add(i.matched_sap_id);
+            else unique.add(i.driver_name.toUpperCase());
+          });
+
+          const active = this.drivers.filter(d => d.depot === depot && d.status === 'Active').length;
+          const pct = active > 0 ? ((unique.size / active) * 100).toFixed(1) : '0.0';
+          const numPct = parseFloat(pct);
+
+          const barColor = numPct >= 70 ? 'bg-emerald-500' : numPct >= 50 ? 'bg-blue-500' : 'bg-amber-500';
+
+          html += `
+            <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+              <div class="flex justify-between text-xs font-bold text-slate-800">
+                <span>Depot Hub: <strong class="text-slate-900">${depot}</strong></span>
+                <span class="${numPct >= 70 ? 'text-emerald-700' : numPct >= 50 ? 'text-blue-700' : 'text-amber-700'} font-black text-sm">${pct}%</span>
+              </div>
+              <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                <div class="${barColor} h-full rounded-full transition-all duration-500" style="width: ${Math.min(numPct, 100)}%"></div>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-500 font-medium">
+                <span>Active Target: <strong>${active.toLocaleString()}</strong></span>
+                <span>Audited: <strong>${unique.size.toLocaleString()}</strong> unique</span>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+
+      renderInfractionsChart(inspections) {
+        const counts = {};
+        inspections.forEach(i => {
+          if (i.violation_remarks) {
+            i.violation_remarks.split(';').forEach(token => {
+              const clean = token.trim();
+              if (clean && clean.length > 2) counts[clean] = (counts[clean] || 0) + 1;
+            });
+          }
+        });
+
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+        const labels = sorted.length > 0 ? sorted.map(s => s[0]) : ['No Violations Recorded'];
+        const data = sorted.length > 0 ? sorted.map(s => s[1]) : [1];
+
+        const ctx = document.getElementById('violationsDoughnutChart');
+        if (!ctx) return;
+
+        if (this.doughnutChart) {
+          this.doughnutChart.destroy();
+        }
+
+        this.doughnutChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: data,
+              backgroundColor: ['#e11d48', '#ea580c', '#eab308', '#06b6d4', '#6366f1', '#a855f7']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+            }
+          }
+        });
+      }
+
+      renderWeeklyMatrix() {
+        if (this.inspections.length === 0) {
+          document.querySelector('#weeklyMatrixTable thead').innerHTML = `<tr><th class="p-4 text-center text-slate-400">Upload inspection data or sync cloud to render matrix.</th></tr>`;
+          document.getElementById('weeklyMatrixBody').innerHTML = '';
+          return;
+        }
+
+        const datePicker = document.getElementById('matrixDatePicker');
+        if (!datePicker.value) {
+          const dates = this.inspections.map(i => i.date).filter(Boolean).sort();
+          if (dates.length > 0) datePicker.value = dates[dates.length - 1];
+        }
+
+        const targetDate = datePicker.value;
+        const dayAudits = this.inspections.filter(i => i.date === targetDate);
+
+        let totalIn = 0, totalOut = 0, totalViolations = 0;
+        dayAudits.forEach(a => {
+          if (a.inspection_type && a.inspection_type.includes('Inside')) totalIn++;
+          else totalOut++;
+          if (a.has_violation) totalViolations++;
+        });
+
+        document.getElementById('eodTargetDate').innerText = targetDate || 'N/A';
+        document.getElementById('eodInsideCount').innerText = totalIn;
+        document.getElementById('eodOutsideCount').innerText = totalOut;
+        document.getElementById('eodViolationCount').innerText = totalViolations;
+        document.getElementById('eodDailyTotal').innerText = dayAudits.length;
+
+        const sampleAudit = dayAudits[0];
+        document.getElementById('matrixWeekBadge').innerText = sampleAudit ? `Week ${sampleAudit.week_number}` : 'Week -';
+
+        const inspectorList = ['QC JB', 'QC PM', 'QC GR', 'QC AA', 'QC RC', 'QC NT', 'QC PJ', 'QC AB'];
+        const depotRows = [
+          { label: 'DEP01-CAN', code: 'CAN' },
+          { label: 'DEP02-LAS', code: 'LAS' },
+          { label: 'DEP03-STA', code: 'STA' },
+          { label: 'DEP04-TAG', code: 'TAG' },
+          { label: 'DEP05-CNT', code: 'RZL' },
+          { label: 'DEP01-CEB', code: 'CEB1' },
+          { label: 'DEP01-SAS', code: 'SAS' },
+          { label: 'DEP01-ELS', code: 'ELS' }
+        ];
+
+        let headHtml = `<tr><th rowspan="2" class="p-2.5 border border-slate-200">Depot Hub</th>`;
+        inspectorList.forEach(qc => {
+          headHtml += `<th colspan="2" class="p-2 border border-slate-200 text-center">${qc}</th>`;
+        });
+        headHtml += `<th colspan="2" class="p-2 border border-slate-200 text-center bg-slate-200">Daily Total</th></tr><tr>`;
+        inspectorList.forEach(() => {
+          headHtml += `<th class="p-1 border text-center font-mono text-[9px]">IN</th><th class="p-1 border text-center font-mono text-[9px]">OUT</th>`;
+        });
+        headHtml += `<th class="p-1 border text-center font-mono bg-slate-200 text-[9px]">IN</th><th class="p-1 border text-center font-mono bg-slate-200 text-[9px]">OUT</th></tr>`;
+        document.querySelector('#weeklyMatrixTable thead').innerHTML = headHtml;
+
+        let bodyHtml = '';
+        let grandIn = 0, grandOut = 0;
+
+        depotRows.forEach(row => {
+          let rowIn = 0, rowOut = 0;
+          let cellsHtml = `<td class="p-2 font-bold text-slate-800 border">${row.label}</td>`;
+
+          inspectorList.forEach(qc => {
+            const matches = dayAudits.filter(a => a.depot_code === row.code && a.qc_initials === qc);
+            const inCount = matches.filter(a => a.inspection_type && a.inspection_type.includes('Inside')).length;
+            const outCount = matches.filter(a => a.inspection_type && !a.inspection_type.includes('Inside')).length;
+            rowIn += inCount;
+            rowOut += outCount;
+            cellsHtml += `<td class="p-1.5 border text-center ${inCount > 0 ? 'font-bold text-slate-900' : 'text-slate-300'}">${inCount || '-'}</td>`;
+            cellsHtml += `<td class="p-1.5 border text-center ${outCount > 0 ? 'font-bold text-emerald-700' : 'text-slate-300'}">${outCount || '-'}</td>`;
+          });
+
+          grandIn += rowIn;
+          grandOut += rowOut;
+          cellsHtml += `<td class="p-1.5 border text-center font-bold bg-slate-50">${rowIn}</td>`;
+          cellsHtml += `<td class="p-1.5 border text-center font-bold bg-slate-50">${rowOut}</td>`;
+          bodyHtml += `<tr>${cellsHtml}</tr>`;
+        });
+
+        document.getElementById('weeklyMatrixBody').innerHTML = bodyHtml;
+
+        let footHtml = `<tr><td class="p-2 border">TOTAL EOD</td>`;
+        inspectorList.forEach(qc => {
+          const qcAudits = dayAudits.filter(a => a.qc_initials === qc);
+          const qIn = qcAudits.filter(a => a.inspection_type && a.inspection_type.includes('Inside')).length;
+          const qOut = qcAudits.filter(a => a.inspection_type && !a.inspection_type.includes('Inside')).length;
+          footHtml += `<td class="p-1.5 border text-center font-bold">${qIn}</td><td class="p-1.5 border text-center font-bold">${qOut}</td>`;
+        });
+        footHtml += `<td class="p-1.5 border text-center font-black bg-slate-200">${grandIn}</td><td class="p-1.5 border text-center font-black bg-slate-200">${grandOut}</td></tr>`;
+        document.getElementById('weeklyMatrixFooter').innerHTML = footHtml;
+      }
+
+      renderDriverRegistryTable() {
+        const query = (document.getElementById('registrySearchInput').value || '').toLowerCase().trim();
+        const statusFilter = document.getElementById('registryStatusFilter').value;
+
+        const statsBySap = new Map();
+        this.inspections.forEach(i => {
+          if (i.matched_sap_id) {
+            if (!statsBySap.has(i.matched_sap_id)) {
+              statsBySap.set(i.matched_sap_id, { total: 0, withV: 0, withoutV: 0 });
+            }
+            const s = statsBySap.get(i.matched_sap_id);
+            s.total++;
+            if (i.has_violation) s.withV++;
+            else s.withoutV++;
+          }
+        });
+
+        const combined = this.drivers.map(d => {
+          const s = statsBySap.get(d.sap_id) || { total: 0, withV: 0, withoutV: 0 };
+          return {
+            sap_id: d.sap_id,
+            full_name: d.full_name,
+            plate: d.license_plate || '-',
+            depot: d.depot,
+            status: d.status,
+            withV: s.withV,
+            withoutV: s.withoutV,
+            total: s.total
+          };
+        }).filter(d => {
+          if (statusFilter !== 'ALL' && d.status !== statusFilter) return false;
+          if (query) {
+            const match = d.full_name.toLowerCase().includes(query) ||
+                          String(d.sap_id).includes(query) ||
+                          d.plate.toLowerCase().includes(query) ||
+                          d.depot.toLowerCase().includes(query);
+            if (!match) return false;
+          }
+          return true;
+        });
+
+        const display = combined.slice(0, 60);
+        const tbody = document.getElementById('registryTableBody');
+
+        if (display.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-slate-400">No matching drivers found in roster.</td></tr>`;
+        } else {
+          tbody.innerHTML = display.map(d => `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-3 font-mono text-slate-500 font-semibold">${d.sap_id}</td>
+              <td class="p-3 font-bold text-slate-900">${d.full_name}</td>
+              <td class="p-3 font-mono uppercase text-slate-700 font-semibold">${d.plate}</td>
+              <td class="p-3 font-semibold text-slate-700">${d.depot}</td>
+              <td class="p-3 text-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${d.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}">
+                  ${d.status}
+                </span>
+              </td>
+              <td class="p-3 text-center font-bold text-rose-600">${d.withV}</td>
+              <td class="p-3 text-center font-bold text-emerald-600">${d.withoutV}</td>
+              <td class="p-3 text-center font-black text-slate-900">${d.total}</td>
+            </tr>
+          `).join('');
+        }
+
+        document.getElementById('registryPaginationInfo').innerHTML = `
+          <span>Showing 1 to ${display.length} of ${combined.length.toLocaleString()} drivers</span>
+          <span class="text-slate-400">Correlated across live fleet</span>
+        `;
+      }
+
+      renderInspectionLogsTable() {
+        const query = (document.getElementById('logsSearchInput').value || '').toLowerCase().trim();
+        const outcomeFilter = document.getElementById('logsFindingFilter').value;
+
+        const filtered = this.inspections.filter(i => {
+          if (outcomeFilter === 'VIOLATION' && !i.has_violation) return false;
+          if (outcomeFilter === 'CLEAN' && i.has_violation) return false;
+          if (query) {
+            const match = String(i.id).includes(query) ||
+                          (i.driver_name && i.driver_name.toLowerCase().includes(query)) ||
+                          (i.qc_name && i.qc_name.toLowerCase().includes(query)) ||
+                          (i.plate_number && i.plate_number.toLowerCase().includes(query)) ||
+                          (i.matched_sap_id && String(i.matched_sap_id).includes(query)) ||
+                          (i.violation_remarks && i.violation_remarks.toLowerCase().includes(query));
+            if (!match) return false;
+          }
+          return true;
+        });
+
+        const display = filtered.slice(0, 60);
+        const tbody = document.getElementById('logsTableBody');
+
+        if (display.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10" class="p-6 text-center text-slate-400">No matching inspection records found.</td></tr>`;
+        } else {
+          tbody.innerHTML = display.map(i => `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="p-3 font-mono font-bold text-slate-700">${i.id}</td>
+              <td class="p-3 text-slate-500 whitespace-nowrap">${i.completion_time ? i.completion_time.substring(0, 16).replace('T', ' ') : '-'}</td>
+              <td class="p-3 font-semibold text-slate-800">${i.qc_name} <span class="text-[10px] text-slate-400">(${i.qc_initials})</span></td>
+              <td class="p-3 font-bold text-slate-900">${i.driver_name}</td>
+              <td class="p-3 font-mono">
+                ${i.matched_sap_id 
+                  ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">${i.matched_sap_id}</span>` 
+                  : `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-500">Unmatched</span>`
+                }
+              </td>
+              <td class="p-3 font-mono uppercase font-bold text-slate-800">${i.plate_number}</td>
+              <td class="p-3 font-semibold text-slate-700">${i.depot_code}</td>
+              <td class="p-3 text-slate-500 text-[11px]">${i.inspection_type && i.inspection_type.includes('Inside') ? 'Inside' : 'Outside'}</td>
+              <td class="p-3 text-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${i.has_violation ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                  ${i.has_violation ? 'Violation' : 'Clean'}
+                </span>
+              </td>
+              <td class="p-3 text-slate-600 max-w-xs truncate" title="${i.violation_remarks || 'None'}">${i.violation_remarks || '-'}</td>
+            </tr>
+          `).join('');
+        }
+
+        document.getElementById('logsPaginationInfo').innerHTML = `
+          <span>Showing 1 to ${display.length} of ${filtered.length.toLocaleString()} records</span>
+          <span class="text-slate-400">Live Multi-Device Database</span>
+        `;
+      }
+
+      handleDriverSearch(val) {
+        const q = val.toLowerCase().trim();
+        const dropdown = document.getElementById('driverSearchDropdown');
+        if (q.length < 2) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
+
+        const matches = this.drivers.filter(d => 
+          d.full_name.toLowerCase().includes(q) ||
+          String(d.sap_id).includes(q) ||
+          (d.license_plate && d.license_plate.toLowerCase().includes(q))
+        ).slice(0, 6);
+
+        if (matches.length === 0) {
+          dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No matching driver in roster.</div>`;
+        } else {
+          dropdown.innerHTML = matches.map(d => `
+            <div onclick="portal.selectDriver(${d.sap_id})" class="p-3 hover:bg-emerald-50 cursor-pointer flex justify-between items-center transition">
+              <div>
+                <div class="text-xs font-bold text-slate-900">${d.full_name}</div>
+                <div class="text-[11px] text-slate-400 font-mono">SAP: ${d.sap_id} • Plate: ${d.license_plate || 'N/A'}</div>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${d.depot}</span>
+                <span class="block text-[10px] font-semibold ${d.status === 'Active' ? 'text-emerald-600' : 'text-rose-600'}">${d.status}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+        dropdown.classList.remove('hidden');
+      }
+
+      selectDriver(sapId) {
+        const d = this.drivers.find(x => x.sap_id === sapId);
+        if (!d) return;
+
+        document.getElementById('inputDriverSearch').value = d.full_name;
+        document.getElementById('inputDriverName').value = d.full_name;
+        document.getElementById('inputSapId').value = d.sap_id;
+        document.getElementById('inputRegisteredPlate').value = d.license_plate || '';
+        document.getElementById('inputInspectedPlate').value = d.license_plate || '';
+
+        const badge = document.getElementById('formStatusBadge');
+        badge.innerText = `${d.status} (SAP: ${d.sap_id})`;
+        badge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${d.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`;
+        badge.classList.remove('hidden');
+
+        const revMap = {
+          'CAN': 'Depot 1 - Caloocan', 'LAS': 'Depot 2 - Las Pinas',
+          'STA': 'Depot 3 - Manila', 'TAG': 'Depot 4 - Taguig',
+          'RZL': 'Depot 5 - Cainta', 'CEB1': 'Depot 1 - Cebu',
+          'SAS': 'Depot 1 - Davao', 'ELS': 'Depot 1 - El Salvador'
+        };
+
+        const depotSel = document.getElementById('selectDepot');
+        for (let i = 0; i < depotSel.options.length; i++) {
+          if (depotSel.options[i].value.includes(d.depot) || (revMap[d.depot] && depotSel.options[i].value.includes(revMap[d.depot]))) {
+            depotSel.selectedIndex = i;
+            break;
+          }
+        }
+
+        document.getElementById('driverSearchDropdown').classList.add('hidden');
+        this.showToast('Driver Selected', `${d.full_name} (SAP: ${d.sap_id})`, 'info');
+      }
+
+      quickSetInspector(name, initials) {
+        document.getElementById('inputQcName').value = name;
+        document.getElementById('inputQcInitials').value = initials;
+      }
+
+      filterChecklistCategory(category) {
+        this.currentChecklistCategory = category;
+        const pills = document.querySelectorAll('#checklistCategoryFilter .cat-pill');
+        pills.forEach(p => {
+          p.className = 'cat-pill px-2.5 py-1 rounded-lg font-semibold text-[11px] bg-white text-rose-900 border border-rose-200 hover:bg-rose-100 whitespace-nowrap';
+        });
+        const clicked = event?.target;
+        if (clicked) {
+          clicked.className = 'cat-pill px-2.5 py-1 rounded-lg font-bold text-[11px] bg-rose-700 text-white shadow-xs whitespace-nowrap';
+        }
+        this.renderViolationChecklist();
+      }
+
+      renderViolationChecklist() {
+        const container = document.getElementById('violationChecklistWrapper');
+        if (!container) return;
+
+        const q = (document.getElementById('checklistSearchInput')?.value || '').toLowerCase().trim();
+        const category = this.currentChecklistCategory;
+
+        const filtered = QCF_STANDARDS_CHECKLIST.filter(item => {
+          if (category !== 'ALL' && item.category !== category) return false;
+          if (q) {
+            const match = item.name.toLowerCase().includes(q) ||
+                          item.rule.toLowerCase().includes(q) ||
+                          item.id.toLowerCase().includes(q);
+            if (!match) return false;
+          }
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<div class="p-3 text-center text-xs text-rose-400 italic">No checklist items matching "${q}".</div>`;
+          return;
+        }
+
+        container.innerHTML = filtered.map(item => {
+          const isSelected = this.selectedViolations.has(item.name);
+          return `
+            <div onclick="portal.toggleChecklistItem('${item.name.replace(/'/g, "\\'")}')" class="p-2.5 rounded-xl border transition cursor-pointer flex items-start justify-between gap-2 ${isSelected ? 'bg-rose-600 text-white border-rose-700 shadow-xs' : 'bg-slate-50/70 hover:bg-rose-50 border-slate-200 text-slate-800'}">
+              <div class="space-y-0.5 flex-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded ${isSelected ? 'bg-rose-800 text-rose-100' : 'bg-slate-200 text-slate-700'}">${item.id}</span>
+                  <span class="text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-rose-200' : 'text-slate-400'}">${item.rule}</span>
+                </div>
+                <div class="text-xs font-bold leading-snug">${item.name}</div>
+              </div>
+              <div class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 ${isSelected ? 'bg-white text-rose-700' : 'border border-slate-300 text-transparent'}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        const counterEl = document.getElementById('selectedViolationsCounter');
+        if (counterEl) {
+          counterEl.innerText = `${this.selectedViolations.size} Selected`;
+        }
+      }
+
+      toggleChecklistItem(tag) {
+        if (this.selectedViolations.has(tag)) {
+          this.selectedViolations.delete(tag);
+        } else {
+          this.selectedViolations.add(tag);
+        }
+        this.renderViolationChecklist();
+      }
+
+      setFindingViolation(hasV) {
+        this.hasViolation = hasV;
+        document.getElementById('inputHasViolation').value = hasV ? 'true' : 'false';
+
+        const bClean = document.getElementById('btnFindingClean');
+        const bViolate = document.getElementById('btnFindingViolation');
+        const box = document.getElementById('violationDetailsContainer');
+
+        if (hasV) {
+          bViolate.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-600 bg-rose-600 text-white shadow-sm flex items-center justify-center gap-2';
+          bClean.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-slate-200 text-slate-600 hover:border-emerald-400 flex items-center justify-center gap-2';
+          box.classList.remove('hidden');
+          this.resizeSignatureCanvas();
+        } else {
+          bClean.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-emerald-600 bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2';
+          bViolate.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-slate-200 text-slate-600 hover:border-rose-400 flex items-center justify-center gap-2';
+          box.classList.add('hidden');
+          this.selectedViolations.clear();
+          this.renderViolationChecklist();
+        }
+      }
+
+      setAcknowledgementMode(mode) {
+        this.acknowledgementMode = mode;
+        const tabSig = document.getElementById('ackTabSignature');
+        const tabPhoto = document.getElementById('ackTabPhoto');
+        const boxSig = document.getElementById('ackContainerSignature');
+        const boxPhoto = document.getElementById('ackContainerPhoto');
+
+        if (mode === 'signature') {
+          tabSig.className = 'py-1.5 px-3 rounded-lg text-xs font-bold bg-white text-slate-800 shadow-xs flex items-center justify-center gap-1.5 transition';
+          tabPhoto.className = 'py-1.5 px-3 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition';
+          boxSig.classList.remove('hidden');
+          boxPhoto.classList.add('hidden');
+          this.resizeSignatureCanvas();
+        } else {
+          tabPhoto.className = 'py-1.5 px-3 rounded-lg text-xs font-bold bg-white text-slate-800 shadow-xs flex items-center justify-center gap-1.5 transition';
+          tabSig.className = 'py-1.5 px-3 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition';
+          boxPhoto.classList.remove('hidden');
+          boxSig.classList.add('hidden');
+        }
+      }
+
+      handleAcknowledgementPhoto(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const rawImg = new Image();
+          rawImg.onload = () => {
+            // Compress and scale down image for storage efficiency
+            const maxDimension = 1200;
+            let w = rawImg.width;
+            let h = rawImg.height;
+            if (w > maxDimension || h > maxDimension) {
+              if (w > h) {
+                h = Math.round((h * maxDimension) / w);
+                w = maxDimension;
+              } else {
+                w = Math.round((w * maxDimension) / h);
+                h = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(rawImg, 0, 0, w, h);
+
+            this.uploadedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            this.uploadedPhotoName = file.name;
+
+            document.getElementById('ackPhotoPreviewImg').src = this.uploadedPhotoDataUrl;
+            document.getElementById('ackPhotoPreviewName').innerText = file.name;
+            document.getElementById('ackPhotoPreviewSize').innerText = `${Math.round(this.uploadedPhotoDataUrl.length / 1024)} KB compressed (Ready)`;
+            document.getElementById('ackPhotoPreviewContainer').classList.remove('hidden');
+
+            this.showToast('Photo Attached', 'Driver acknowledgement photo ready for inspection save.', 'info');
+          };
+          rawImg.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      removeAcknowledgementPhoto() {
+        this.uploadedPhotoDataUrl = null;
+        this.uploadedPhotoName = null;
+        const input = document.getElementById('ackPhotoInput');
+        if (input) input.value = '';
+        document.getElementById('ackPhotoPreviewImg').src = '';
+        document.getElementById('ackPhotoPreviewContainer').classList.add('hidden');
+      }
+
+      setupSignatureCanvas() {
+        this.sigCanvas = document.getElementById('signaturePad');
+        if (!this.sigCanvas) return;
+        this.sigCtx = this.sigCanvas.getContext('2d');
+        this.sigCtx.lineWidth = 2.5;
+        this.sigCtx.lineCap = 'round';
+        this.sigCtx.strokeStyle = '#0f172a';
+
+        const getPos = (e) => {
+          const rect = this.sigCanvas.getBoundingClientRect();
+          const cx = e.touches ? e.touches[0].clientX : e.clientX;
+          const cy = e.touches ? e.touches[0].clientY : e.clientY;
+          return { x: cx - rect.left, y: cy - rect.top };
+        };
+
+        const start = (e) => {
+          this.isDrawing = true;
+          this.hasDrawnSignature = true;
+          const p = getPos(e);
+          this.sigCtx.beginPath();
+          this.sigCtx.moveTo(p.x, p.y);
+          e.preventDefault();
+        };
+
+        const draw = (e) => {
+          if (!this.isDrawing) return;
+          const p = getPos(e);
+          this.sigCtx.lineTo(p.x, p.y);
+          this.sigCtx.stroke();
+          e.preventDefault();
+        };
+
+        const stop = () => { this.isDrawing = false; };
+
+        this.sigCanvas.addEventListener('mousedown', start);
+        this.sigCanvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stop);
+
+        this.sigCanvas.addEventListener('touchstart', start, { passive: false });
+        this.sigCanvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stop);
+      }
+
+      resizeSignatureCanvas() {
+        if (!this.sigCanvas) return;
+        const rect = this.sigCanvas.parentElement.getBoundingClientRect();
+        if (rect.width > 0) {
+          this.sigCanvas.width = rect.width;
+          this.sigCanvas.height = 112;
+          this.sigCtx.lineWidth = 2.5;
+          this.sigCtx.lineCap = 'round';
+          this.sigCtx.strokeStyle = '#0f172a';
+        }
+      }
+
+      clearSignaturePad() {
+        if (this.sigCtx && this.sigCanvas) {
+          this.sigCtx.clearRect(0, 0, this.sigCanvas.width, this.sigCanvas.height);
+          this.hasDrawnSignature = false;
+        }
+      }
+
+      getSignatureDataUrl() {
+        if (!this.hasDrawnSignature || !this.sigCanvas) return null;
+        return this.sigCanvas.toDataURL('image/png');
+      }
+
+      async handleFormSubmit(e) {
+        e.preventDefault();
+
+        const qcName = document.getElementById('inputQcName').value.trim();
+        const qcInitials = document.getElementById('inputQcInitials').value.trim() || 'QC RC';
+        const driverName = document.getElementById('inputDriverName').value.trim();
+        const sapIdVal = document.getElementById('inputSapId').value.trim();
+        const inspectedPlate = document.getElementById('inputInspectedPlate').value.trim().toUpperCase();
+        const depotRaw = document.getElementById('selectDepot').value;
+        const depotCode = DEPOT_RAW_TO_CODE[depotRaw] || 'OTHER';
+        const supervisor = document.getElementById('inputSupervisor').value.trim();
+        const type = document.querySelector('input[name="inspectionType"]:checked').value;
+        const remarks = document.getElementById('inputViolationRemarks').value.trim();
+
+        // Capture Acknowledgement (Signature or Uploaded Photo)
+        const signatureDataUrl = this.getSignatureDataUrl();
+        const photoDataUrl = this.uploadedPhotoDataUrl;
+
+        const combinedRemarks = this.hasViolation
+          ? [...this.selectedViolations, remarks].filter(Boolean).join('; ')
+          : '';
+
+        const now = new Date();
+        const nextId = this.inspections.length > 0 ? Math.max(...this.inspections.map(i => Number(i.id) || 0)) + 1 : 1;
+
+        let resolvedSapId = sapIdVal ? Number(sapIdVal) : null;
+        if (!resolvedSapId) {
+          const matchResult = this.matcher.correlateInspection(driverName, inspectedPlate, depotCode);
+          if (matchResult.driver) resolvedSapId = matchResult.driver.sap_id;
+        }
+
+        const opDateStr = this.getOperationalDateStr(now);
+        const opWeekNum = this.getOperationalWeek(now);
+
+        const newRecord = {
+          id: nextId,
+          start_time: now.toISOString(),
+          completion_time: now.toISOString(),
+          date: opDateStr,
+          week_number: opWeekNum,
+          qc_email: 'qc.inspector@company.com',
+          qc_name: qcName,
+          qc_initials: qcInitials,
+          driver_name: driverName,
+          matched_sap_id: resolvedSapId,
+          plate_number: inspectedPlate,
+          depot_raw: depotRaw,
+          depot_code: depotCode,
+          supervisor: supervisor,
+          inspection_type: type,
+          has_violation: this.hasViolation,
+          violation_remarks: combinedRemarks,
+          signature_data_url: signatureDataUrl,
+          acknowledgement_photo_url: photoDataUrl,
+          acknowledgement_type: photoDataUrl ? 'photo' : signatureDataUrl ? 'signature' : 'none',
+          submitted_by_uid: cloudUser ? cloudUser.uid : 'local'
+        };
+
+        // 1. Save to local IndexedDB (instant offline response)
+        this.inspections.unshift(newRecord);
+        await dbPutBatch('inspections', [newRecord]);
+
+        // 2. Publish to Cloud Firestore for other QCs to receive in real-time
+        if (db) {
+          try {
+            const inspDocRef = getInspDocRef(db, nextId);
+            await setDoc(inspDocRef, newRecord);
+          } catch (cloudErr) {
+            console.warn('Real-time sync queued in offline cache:', cloudErr);
+          }
+        }
+
+        this.playSuccessTone();
+        this.showToast('Inspection Logged & Broadcasted', `Audit #${nextId} for ${driverName} recorded with acknowledgement.`, 'success');
+
+        document.getElementById('inspectionForm').reset();
+        this.setFindingViolation(false);
+        this.clearSignaturePad();
+        this.removeAcknowledgementPhoto();
+        document.getElementById('formStatusBadge').classList.add('hidden');
+
+        this.renderDashboard();
+        this.renderWeeklyMatrix();
+        this.renderDriverRegistryTable();
+        this.renderInspectionLogsTable();
+        this.switchTab('logs');
+      }
+
+      renderInspectionLogsTable() {
+        const query = (document.getElementById('logsSearchInput').value || '').toLowerCase().trim();
+        const outcomeFilter = document.getElementById('logsFindingFilter').value;
+
+        const filtered = this.inspections.filter(i => {
+          if (outcomeFilter === 'VIOLATION' && !i.has_violation) return false;
+          if (outcomeFilter === 'CLEAN' && i.has_violation) return false;
+          if (query) {
+            const match = String(i.id).includes(query) ||
+                          (i.driver_name && i.driver_name.toLowerCase().includes(query)) ||
+                          (i.qc_name && i.qc_name.toLowerCase().includes(query)) ||
+                          (i.plate_number && i.plate_number.toLowerCase().includes(query)) ||
+                          (i.matched_sap_id && String(i.matched_sap_id).includes(query)) ||
+                          (i.violation_remarks && i.violation_remarks.toLowerCase().includes(query));
+            if (!match) return false;
+          }
+          return true;
+        });
+
+        const display = filtered.slice(0, 60);
+        const tbody = document.getElementById('logsTableBody');
+
+        if (display.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="11" class="p-6 text-center text-slate-400">No matching inspection records found.</td></tr>`;
+        } else {
+          tbody.innerHTML = display.map(i => {
+            const hasAck = i.signature_data_url || i.acknowledgement_photo_url || i.acknowledgement_type === 'signature' || i.acknowledgement_type === 'photo';
+            const ackType = i.acknowledgement_photo_url ? 'photo' : i.signature_data_url ? 'signature' : 'none';
+
+            return `
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-3 font-mono font-bold text-slate-700">${i.id}</td>
+                <td class="p-3 text-slate-500 whitespace-nowrap">${i.completion_time ? i.completion_time.substring(0, 16).replace('T', ' ') : '-'}</td>
+                <td class="p-3 font-semibold text-slate-800">${i.qc_name} <span class="text-[10px] text-slate-400">(${i.qc_initials})</span></td>
+                <td class="p-3 font-bold text-slate-900">${i.driver_name}</td>
+                <td class="p-3 font-mono">
+                  ${i.matched_sap_id 
+                    ? `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">${i.matched_sap_id}</span>` 
+                    : `<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-500">Unmatched</span>`
+                  }
+                </td>
+                <td class="p-3 font-mono uppercase font-bold text-slate-800">${i.plate_number}</td>
+                <td class="p-3 font-semibold text-slate-700">${i.depot_code}</td>
+                <td class="p-3 text-slate-500 text-[11px]">${i.inspection_type && i.inspection_type.includes('Inside') ? 'Inside' : 'Outside'}</td>
+                <td class="p-3 text-center">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${i.has_violation ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+                    ${i.has_violation ? 'Violation' : 'Clean'}
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  ${hasAck ? `
+                    <button type="button" onclick="portal.openAcknowledgementModal(${i.id})" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold ${ackType === 'photo' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
+                      ${ackType === 'photo' ? '📷 Photo' : '✍️ Signed'}
+                    </button>
+                  ` : `
+                    <span class="text-[10px] text-slate-400 font-semibold">-</span>
+                  `}
+                </td>
+                <td class="p-3 text-slate-600 max-w-xs truncate" title="${i.violation_remarks || 'None'}">${i.violation_remarks || '-'}</td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        document.getElementById('logsPaginationInfo').innerHTML = `
+          <span>Showing 1 to ${display.length} of ${filtered.length.toLocaleString()} records</span>
+          <span class="text-slate-400">Live Multi-Device Database</span>
+        `;
+      }
+
+      openAcknowledgementModal(inspectionId) {
+        const item = this.inspections.find(i => Number(i.id) === Number(inspectionId));
+        if (!item) return;
+
+        document.getElementById('ackModalTitle').innerText = `Acknowledgement: Audit #${item.id}`;
+        document.getElementById('ackModalSub').innerText = `${item.driver_name} • Unit: ${item.plate_number} • Depot: ${item.depot_code}`;
+
+        const media = item.acknowledgement_photo_url || item.signature_data_url;
+        const imgEl = document.getElementById('ackModalImg');
+        const mediaWrap = document.getElementById('ackModalMediaWrapper');
+
+        if (media) {
+          imgEl.src = media;
+          imgEl.classList.remove('hidden');
+          mediaWrap.classList.remove('hidden');
+        } else {
+          imgEl.classList.add('hidden');
+          mediaWrap.classList.add('hidden');
+        }
+
+        const detailsEl = document.getElementById('ackModalDetails');
+        detailsEl.innerHTML = `
+          <div><strong>Inspector:</strong> ${item.qc_name} (${item.qc_initials})</div>
+          <div><strong>Completion Timestamp:</strong> ${item.completion_time ? item.completion_time.replace('T', ' ').substring(0, 19) : '-'}</div>
+          <div><strong>Compliance Finding:</strong> <span class="font-bold ${item.has_violation ? 'text-rose-600' : 'text-emerald-700'}">${item.has_violation ? 'With Violation/s' : 'Clean Inspection'}</span></div>
+          ${item.violation_remarks ? `<div class="pt-1 text-slate-700"><strong>Citations & Remarks:</strong> <p class="mt-0.5 text-rose-800 bg-rose-50 p-2 rounded-lg border border-rose-200 font-mono text-[11px] leading-relaxed">${item.violation_remarks}</p></div>` : ''}
+        `;
+
+        const modal = document.getElementById('acknowledgementModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      closeAcknowledgementModal() {
+        const modal = document.getElementById('acknowledgementModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      toggleViolationChip(btn, tag) {
+        if (this.selectedViolations.has(tag)) {
+          this.selectedViolations.delete(tag);
+          btn.className = 'v-tag-chip px-2.5 py-1 text-xs font-semibold rounded-lg border border-rose-300 bg-white text-slate-700 hover:bg-rose-100 transition';
+        } else {
+          this.selectedViolations.add(tag);
+          btn.className = 'v-tag-chip px-2.5 py-1 text-xs font-semibold rounded-lg border border-rose-600 bg-rose-600 text-white transition';
+        }
+      }
+
+      setFindingViolation(hasV) {
+        this.hasViolation = hasV;
+        document.getElementById('inputHasViolation').value = hasV ? 'true' : 'false';
+
+        const bClean = document.getElementById('btnFindingClean');
+        const bViolate = document.getElementById('btnFindingViolation');
+        const box = document.getElementById('violationDetailsContainer');
+
+        if (hasV) {
+          bViolate.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-600 bg-rose-600 text-white shadow-sm flex items-center justify-center gap-2';
+          bClean.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-slate-200 text-slate-600 hover:border-emerald-400 flex items-center justify-center gap-2';
+          box.classList.remove('hidden');
+          this.resizeSignatureCanvas();
+        } else {
+          bClean.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-emerald-600 bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-2';
+          bViolate.className = 'py-3 px-4 rounded-xl text-xs sm:text-sm font-bold border-2 border-slate-200 text-slate-600 hover:border-rose-400 flex items-center justify-center gap-2';
+          box.classList.add('hidden');
+          this.selectedViolations.clear();
+          document.querySelectorAll('.v-tag-chip').forEach(c => {
+            c.className = 'v-tag-chip px-2.5 py-1 text-xs font-semibold rounded-lg border border-rose-300 bg-white text-slate-700 hover:bg-rose-100 transition';
+          });
+        }
+      }
+
+      setupSignatureCanvas() {
+        this.sigCanvas = document.getElementById('signaturePad');
+        if (!this.sigCanvas) return;
+        this.sigCtx = this.sigCanvas.getContext('2d');
+        this.sigCtx.lineWidth = 2.5;
+        this.sigCtx.lineCap = 'round';
+        this.sigCtx.strokeStyle = '#0f172a';
+
+        const getPos = (e) => {
+          const rect = this.sigCanvas.getBoundingClientRect();
+          const cx = e.touches ? e.touches[0].clientX : e.clientX;
+          const cy = e.touches ? e.touches[0].clientY : e.clientY;
+          return { x: cx - rect.left, y: cy - rect.top };
+        };
+
+        const start = (e) => {
+          this.isDrawing = true;
+          const p = getPos(e);
+          this.sigCtx.beginPath();
+          this.sigCtx.moveTo(p.x, p.y);
+          e.preventDefault();
+        };
+
+        const draw = (e) => {
+          if (!this.isDrawing) return;
+          const p = getPos(e);
+          this.sigCtx.lineTo(p.x, p.y);
+          this.sigCtx.stroke();
+          e.preventDefault();
+        };
+
+        const stop = () => { this.isDrawing = false; };
+
+        this.sigCanvas.addEventListener('mousedown', start);
+        this.sigCanvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stop);
+
+        this.sigCanvas.addEventListener('touchstart', start, { passive: false });
+        this.sigCanvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stop);
+      }
+
+      resizeSignatureCanvas() {
+        if (!this.sigCanvas) return;
+        const rect = this.sigCanvas.parentElement.getBoundingClientRect();
+        if (rect.width > 0) {
+          this.sigCanvas.width = rect.width;
+          this.sigCanvas.height = 112;
+        }
+      }
+
+      clearSignaturePad() {
+        if (this.sigCtx && this.sigCanvas) {
+          this.sigCtx.clearRect(0, 0, this.sigCanvas.width, this.sigCanvas.height);
+        }
+      }
+
+      /* Synchronizes audits to public cloud path in real time */
+      async handleFormSubmit(e) {
+        e.preventDefault();
+
+        const qcName = document.getElementById('inputQcName').value.trim();
+        const qcInitials = document.getElementById('inputQcInitials').value.trim() || 'QC RC';
+        const driverName = document.getElementById('inputDriverName').value.trim();
+        const sapIdVal = document.getElementById('inputSapId').value.trim();
+        const inspectedPlate = document.getElementById('inputInspectedPlate').value.trim().toUpperCase();
+        const depotRaw = document.getElementById('selectDepot').value;
+        const depotCode = DEPOT_RAW_TO_CODE[depotRaw] || 'OTHER';
+        const supervisor = document.getElementById('inputSupervisor').value.trim();
+        const type = document.querySelector('input[name="inspectionType"]:checked').value;
+        const remarks = document.getElementById('inputViolationRemarks').value.trim();
+
+        const combinedRemarks = this.hasViolation
+          ? [...this.selectedViolations, remarks].filter(Boolean).join('; ')
+          : '';
+
+        const now = new Date();
+        const nextId = this.inspections.length > 0 ? Math.max(...this.inspections.map(i => Number(i.id) || 0)) + 1 : 1;
+
+        let resolvedSapId = sapIdVal ? Number(sapIdVal) : null;
+        if (!resolvedSapId) {
+          const matchResult = this.matcher.correlateInspection(driverName, inspectedPlate, depotCode);
+          if (matchResult.driver) resolvedSapId = matchResult.driver.sap_id;
+        }
+
+        const opDateStr = this.getOperationalDateStr(now);
+        const opWeekNum = this.getOperationalWeek(now);
+
+        const newRecord = {
+          id: nextId,
+          start_time: now.toISOString(),
+          completion_time: now.toISOString(),
+          date: opDateStr,
+          week_number: opWeekNum,
+          qc_email: 'qc.inspector@company.com',
+          qc_name: qcName,
+          qc_initials: qcInitials,
+          driver_name: driverName,
+          matched_sap_id: resolvedSapId,
+          plate_number: inspectedPlate,
+          depot_raw: depotRaw,
+          depot_code: depotCode,
+          supervisor: supervisor,
+          inspection_type: type,
+          has_violation: this.hasViolation,
+          violation_remarks: combinedRemarks,
+          submitted_by_uid: cloudUser ? cloudUser.uid : 'local'
+        };
+
+        // 1. Save to local IndexedDB (instant offline response)
+        this.inspections.unshift(newRecord);
+        await dbPutBatch('inspections', [newRecord]);
+
+        // 2. Publish to Cloud Firestore for other QCs to receive in real-time
+        if (cloudUser && db) {
+          try {
+            const inspDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'inspections', String(nextId));
+            await setDoc(inspDocRef, newRecord);
+          } catch (cloudErr) {
+            console.warn('Real-time sync queued in offline cache:', cloudErr);
+          }
+        }
+
+        this.playSuccessTone();
+        this.showToast('Inspection Logged & Broadcasted', `Audit #${nextId} for ${driverName} synced to all devices.`, 'success');
+
+        document.getElementById('inspectionForm').reset();
+        this.setFindingViolation(false);
+        this.clearSignaturePad();
+        document.getElementById('formStatusBadge').classList.add('hidden');
+
+        this.renderDashboard();
+        this.renderWeeklyMatrix();
+        this.renderDriverRegistryTable();
+        this.renderInspectionLogsTable();
+        this.switchTab('logs');
+      }
+
+      // Operational Date: Shifts before 06:00:00 belong to the previous operational calendar day
+      getOperationalDateTime(d) {
+        const dateObj = d instanceof Date ? d : new Date(d);
+        // Shift back by 6 hours: 6 * 3600 * 1000 ms
+        return new Date(dateObj.getTime() - (6 * 3600 * 1000));
+      }
+
+      getOperationalDateStr(d) {
+        const op = this.getOperationalDateTime(d);
+        const y = op.getFullYear();
+        const m = String(op.getMonth() + 1).padStart(2, '0');
+        const day = String(op.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      // Operational Week: Starts Saturday 06:00:00 AM and ends Friday 05:59:59 AM
+      getOperationalWeek(d) {
+        const op = this.getOperationalDateTime(d);
+        // Saturday is day 6 in JS (0=Sun, 1=Mon, ..., 5=Fri, 6=Sat)
+        const daysSinceSaturday = (op.getDay() + 1) % 7;
+        const startSaturday = new Date(op);
+        startSaturday.setDate(op.getDate() - daysSinceSaturday);
+
+        // Midpoint Tuesday of the Saturday–Friday operational cycle
+        const midTuesday = new Date(startSaturday);
+        midTuesday.setDate(startSaturday.getDate() + 3);
+
+        const target = new Date(Date.UTC(midTuesday.getFullYear(), midTuesday.getMonth(), midTuesday.getDate()));
+        const dayNr = target.getUTCDay() || 7;
+        target.setUTCDate(target.getUTCDate() + 4 - dayNr);
+        const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+        return Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+      }
+
+      playSuccessTone() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.2);
+        } catch (e) {}
+      }
+
+      async handleDriversUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        this.showProgress(true, `Reading ${file.name}...`, 15);
+        const reader = new FileReader();
+
+        reader.onload = async (evt) => {
+          try {
+            this.showProgress(true, 'Parsing driver workbook...', 40);
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+
+            if (!rows || rows.length === 0) {
+              this.showProgress(false);
+              this.showToast('Upload Error', 'Spreadsheet is empty.', 'error');
+              return;
+            }
+
+            this.showProgress(true, 'Indexing and correlating drivers...', 65);
+            const driverList = [];
+            let activeCount = 0;
+
+            rows.forEach((r, idx) => {
+              if (r['SAP ID'] !== undefined && r['SAP ID'] !== null) {
+                const status = String(r['Status'] || 'Active').trim();
+                if (status.toLowerCase().includes('active')) activeCount++;
+                driverList.push({
+                  sap_id: Number(r['SAP ID']) || (100000 + idx),
+                  full_name: String(r['Full name'] || '').trim(),
+                  status: status,
+                  account_status: String(r['Account status'] || 'Unlock').trim(),
+                  vehicle_model: r['Vehicle model'] ? String(r['Vehicle model']).trim() : null,
+                  license_plate: r['License plate'] ? String(r['License plate']).trim().toUpperCase() : null,
+                  province_city: String(r['Province/City'] || '').trim(),
+                  depot: String(r['Depot'] || 'CAN').trim()
+                });
+              }
+            });
+
+            // 1. Save to local IndexedDB
+            await dbPutBatch('drivers', driverList);
+            this.drivers = await dbGetAll('drivers');
+            this.matcher.indexDrivers(this.drivers);
+
+            // 2. Publish batches to cloud so all QC phones receive updated roster
+            if (db) {
+              this.showProgress(true, 'Publishing updated roster across all QC devices...', 85);
+              const chunkSize = 400;
+              const totalChunks = Math.ceil(driverList.length / chunkSize);
+              for (let c = 0; c < totalChunks; c++) {
+                const chunk = driverList.slice(c * chunkSize, (c + 1) * chunkSize);
+                const chunkRef = getRosterDocRef(db, `batch_${c}`);
+                await setDoc(chunkRef, {
+                  chunkIndex: c,
+                  totalChunks: totalChunks,
+                  updatedAt: new Date().toISOString(),
+                  uploadedBy: cloudUser ? cloudUser.uid : 'admin',
+                  drivers: chunk
+                });
+              }
+            }
+
+            this.showProgress(false);
+            document.getElementById('uploadDriversStatus').innerHTML = `✅ Ingested <strong>${driverList.length.toLocaleString()}</strong> drivers (${activeCount.toLocaleString()} active). Synced to cloud.`;
+            this.showToast('Roster Broadcasted', `${driverList.length.toLocaleString()} drivers published nationwide.`, 'success');
+
+            if (this.inspections.length > 0) {
+              this.reCorrelateInspections();
+            }
+
+            await this.loadLocalCache();
+          } catch (err) {
+            this.showProgress(false);
+            this.showToast('Parse Failed', err.message, 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      /* Ingesting bulk inspection forms with local + cloud batching */
+      async handleInspectionsUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        this.showProgress(true, `Reading ${file.name}...`, 10);
+        const reader = new FileReader();
+
+        reader.onload = async (evt) => {
+          try {
+            this.showProgress(true, 'Parsing inspection responses...', 30);
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const sheetName = workbook.SheetNames.includes('Response') ? 'Response' : workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+
+            this.showProgress(true, 'Correlating drivers and fixing legacy IDs...', 60);
+            const records = [];
+            const seenIds = new Set();
+            let matchedCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+              const row = rows[i];
+              let rawId = row['Id'];
+              if (rawId === undefined || rawId === null) continue;
+              if (rawId === 'v') rawId = 13432;
+              const cleanId = Number(rawId);
+              if (isNaN(cleanId) || seenIds.has(cleanId)) continue;
+              seenIds.add(cleanId);
+
+              let compDate = row['Completion time'] instanceof Date ? row['Completion time'] : new Date(row['Completion time'] || Date.now());
+              if (isNaN(compDate.getTime())) compDate = new Date();
+
+              const opDateStr = this.getOperationalDateStr(compDate);
+              const opWeekNum = this.getOperationalWeek(compDate);
+              const qcName = String(row['Name'] || '').trim();
+              const driverName = String(row["Driver's Name"] || '').trim();
+              const plate = String(row['Plate number:'] || '').trim().toUpperCase();
+              const depotRaw = String(row["Driver's Depot."] || '').trim();
+              const depotCode = DEPOT_RAW_TO_CODE[depotRaw] || 'OTHER';
+              const hasV = String(row['Driver with / without violation/s?'] || '').toLowerCase().includes('with violation');
+
+              const matchResult = this.matcher.correlateInspection(driverName, plate, depotCode);
+              if (matchResult.driver) matchedCount++;
+
+              records.push({
+                id: cleanId,
+                start_time: row['Start time'] ? String(row['Start time']) : compDate.toISOString(),
+                completion_time: compDate.toISOString(),
+                date: opDateStr,
+                week_number: opWeekNum,
+                qc_email: String(row['Email'] || '').trim(),
+                qc_name: qcName,
+                qc_initials: INSPECTOR_INITIALS_MAP[qcName] || 'QC',
+                driver_name: driverName,
+                matched_sap_id: matchResult.driver ? matchResult.driver.sap_id : null,
+                plate_number: plate,
+                depot_raw: depotRaw,
+                depot_code: depotCode,
+                supervisor: row["Driver's Operations Supervisor (OS)"] ? String(row["Driver's Operations Supervisor (OS)"]).trim() : '',
+                inspection_type: String(row['Depot Inspection / Outside Inspection'] || 'Depot (Inside Depot)').trim(),
+                has_violation: hasV,
+                violation_remarks: row['Violation (Others section for remarks)'] ? String(row['Violation (Others section for remarks)']).trim() : '',
+                submitted_by_uid: cloudUser ? cloudUser.uid : 'bulk-upload'
+              });
+            }
+
+            this.showProgress(true, 'Saving correlated records to IndexedDB...', 85);
+            await dbPutBatch('inspections', records);
+            this.inspections = await dbGetAll('inspections');
+
+            this.showProgress(false);
+            const matchPct = records.length > 0 ? ((matchedCount / records.length) * 100).toFixed(1) : 0;
+            document.getElementById('uploadInspectionsStatus').innerHTML = `✅ Ingested <strong>${records.length.toLocaleString()}</strong> audits. Smart matched <strong>${matchedCount.toLocaleString()} (${matchPct}%)</strong> to SAP IDs.`;
+            this.showToast('Inspections Ingested', `${records.length.toLocaleString()} records correlated locally and prepared for cloud distribution.`, 'success');
+
+            await this.loadLocalCache();
+          } catch (err) {
+            this.showProgress(false);
+            this.showToast('Parse Failed', err.message, 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      async forceCloudRefresh() {
+        if (!db) {
+          this.showToast('Local Mode', 'Cloud configuration not active.', 'info');
+          return;
+        }
+        this.showToast('Refreshing', 'Querying central cloud database...', 'info');
+        try {
+          const inspSnap = await getDocs(getInspCollection(db));
+          const cloudList = [];
+          inspSnap.forEach(d => cloudList.push(d.data()));
+
+          if (cloudList.length > 0) {
+            const map = new Map();
+            this.inspections.forEach(i => map.set(Number(i.id), i));
+            cloudList.forEach(c => map.set(Number(c.id), c));
+            this.inspections = Array.from(map.values()).sort((a, b) => Number(b.id) - Number(a.id));
+            await dbPutBatch('inspections', this.inspections);
+          }
+
+          this.populateWeekDropdown();
+          this.renderCurrentView();
+          this.showToast('Sync Complete', `Loaded ${cloudList.length} shared audits from cloud.`, 'success');
+        } catch (e) {
+          this.showToast('Sync Warning', e.message, 'error');
+        }
+      }
+
+      reCorrelateInspections() {
+        let matched = 0;
+        this.inspections.forEach(i => {
+          if (!i.matched_sap_id) {
+            const res = this.matcher.correlateInspection(i.driver_name, i.plate_number, i.depot_code);
+            if (res.driver) {
+              i.matched_sap_id = res.driver.sap_id;
+              matched++;
+            }
+          }
+        });
+        if (matched > 0) {
+          dbPutBatch('inspections', this.inspections);
+        }
+      }
+
+      showProgress(show, text = '', pct = 0) {
+        const container = document.getElementById('uploadProgressBarContainer');
+        const bar = document.getElementById('uploadProgressBar');
+        const txt = document.getElementById('uploadProgressText');
+        const pVal = document.getElementById('uploadProgressPct');
+
+        if (show) {
+          container.classList.remove('hidden');
+          txt.innerText = text;
+          pVal.innerText = `${pct}%`;
+          bar.style.width = `${pct}%`;
+        } else {
+          container.classList.add('hidden');
+        }
+      }
+
+      exportRegistryExcel() {
+        if (this.drivers.length === 0) {
+          this.showToast('Export Error', 'No driver data to export.', 'error');
+          return;
+        }
+
+        const statsBySap = new Map();
+        this.inspections.forEach(i => {
+          if (i.matched_sap_id) {
+            if (!statsBySap.has(i.matched_sap_id)) {
+              statsBySap.set(i.matched_sap_id, { total: 0, withV: 0, withoutV: 0 });
+            }
+            const s = statsBySap.get(i.matched_sap_id);
+            s.total++;
+            if (i.has_violation) s.withV++;
+            else s.withoutV++;
+          }
+        });
+
+        const rows = this.drivers.map(d => {
+          const s = statsBySap.get(d.sap_id) || { total: 0, withV: 0, withoutV: 0 };
+          return {
+            'SAP ID': d.sap_id,
+            'Driver Full Name': d.full_name,
+            'Registered Plate': d.license_plate || '',
+            'Depot': d.depot,
+            'Status': d.status,
+            'Total Inspections': s.total,
+            'With Violations': s.withV,
+            'Without Violations': s.withoutV
+          };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'QCIperTXTX');
+        XLSX.writeFile(wb, `QC_Driver_Coverage_Registry_QCI.xlsx`);
+        this.showToast('Export Complete', 'Downloaded QCIperTXTX Excel file.', 'success');
+      }
+
+      exportLogsExcel() {
+        if (this.inspections.length === 0) {
+          this.showToast('Export Error', 'No inspection logs to export.', 'error');
+          return;
+        }
+
+        const rows = this.inspections.map(i => ({
+          'Id': i.id,
+          'Completion Time': i.completion_time,
+          'QC Inspector': i.qc_name,
+          'Driver Name': i.driver_name,
+          'Matched SAP ID': i.matched_sap_id || '',
+          'Inspected Plate': i.plate_number,
+          'Depot': i.depot_code,
+          'Inspection Type': i.inspection_type,
+          'Finding': i.has_violation ? 'With violation/s' : 'Without violation/s',
+          'Violation Remarks': i.violation_remarks
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Response');
+        XLSX.writeFile(wb, `QC_Inspection_Response_Export.xlsx`);
+        this.showToast('Export Complete', 'Downloaded Response Ledger Excel file.', 'success');
+      }
+
+      exportWeeklyMatrixExcel() {
+        const table = document.getElementById('weeklyMatrixTable');
+        const wb = XLSX.utils.table_to_book(table, { sheet: 'Weekly Matrix' });
+        XLSX.writeFile(wb, `QC_Weekly_EOD_Matrix.xlsx`);
+        this.showToast('Export Complete', 'Downloaded Weekly EOD Matrix.', 'success');
+      }
+
+      switchTab(tabId) {
+        this.activeTab = tabId;
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+          btn.classList.remove('bg-emerald-800', 'text-white', 'shadow-sm');
+          if (!btn.id.includes('upload')) {
+            btn.classList.add('text-emerald-200');
+          }
+        });
+
+        const activePane = document.getElementById(`view-${tabId}`);
+        const activeBtn = document.getElementById(`navTab-${tabId}`);
+        if (activePane) activePane.classList.remove('hidden');
+        if (activeBtn) {
+          activeBtn.classList.add('bg-emerald-800', 'text-white', 'shadow-sm');
+          activeBtn.classList.remove('text-emerald-200');
+        }
+
+        document.getElementById('mobileNavMenu').classList.add('hidden');
+
+        if (tabId === 'dashboard') this.renderDashboard();
+        if (tabId === 'weekly') this.renderWeeklyMatrix();
+        if (tabId === 'registry') this.renderDriverRegistryTable();
+        if (tabId === 'logs') this.renderInspectionLogsTable();
+        if (tabId === 'form') this.resizeSignatureCanvas();
+      }
+
+      toggleMobileMenu() {
+        document.getElementById('mobileNavMenu').classList.toggle('hidden');
+      }
+
+      promptClearDatabase() {
+        this.showConfirmDialog(
+          'Clear Local Cache',
+          'This wipes only this browser device\'s local IndexedDB cache. Data stored in the shared cloud remains preserved.',
+          async () => {
+            const dbInstance = await openDB();
+            const tx = dbInstance.transaction(['drivers', 'inspections'], 'readwrite');
+            tx.objectStore('drivers').clear();
+            tx.objectStore('inspections').clear();
+            tx.oncomplete = async () => {
+              this.drivers = [];
+              this.inspections = [];
+              this.matcher = new SmartDriverMatcher();
+              document.getElementById('uploadDriversStatus').innerText = 'Ready for upload.';
+              document.getElementById('uploadInspectionsStatus').innerText = 'Ready for upload.';
+              await this.loadLocalCache();
+              this.showToast('Cache Cleared', 'Local records wiped. Cloud sync will restore active data.', 'info');
+              this.switchTab('dashboard');
+            };
+          }
+        );
+      }
+
+      showConfirmDialog(title, message, callback) {
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+        this.confirmCallback = callback;
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      closeConfirmModal(confirmed) {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (confirmed && this.confirmCallback) {
+          this.confirmCallback();
+        }
+        this.confirmCallback = null;
+      }
+
+      showToast(title, msg, type = 'success') {
+        const toast = document.getElementById('toastNotification');
+        const titleEl = document.getElementById('toastTitle');
+        const msgEl = document.getElementById('toastMessage');
+        const iconEl = document.getElementById('toastIcon');
+
+        titleEl.innerText = title;
+        msgEl.innerText = msg;
+
+        if (type === 'success') {
+          toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-slate-900 text-white flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border border-emerald-500';
+          iconEl.innerHTML = `<svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
+        } else if (type === 'error') {
+          toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-rose-950 text-white flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border border-rose-500';
+          iconEl.innerHTML = `<svg class="w-6 h-6 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+        } else {
+          toast.className = 'fixed bottom-6 right-6 z-50 transform translate-y-0 opacity-100 transition-all duration-300 bg-slate-900 text-white flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border border-blue-500';
+          iconEl.innerHTML = `<svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        }
+
+        setTimeout(() => {
+          toast.classList.remove('translate-y-0', 'opacity-100');
+          toast.classList.add('translate-y-24', 'opacity-0');
+        }, 3500);
+      }
+    }
+
+    window.portal = new PortalEngine();
+    window.addEventListener('DOMContentLoaded', () => {
+      window.portal.init();
+    });
+  </script>
+</body>
+</html>
